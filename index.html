@@ -1415,9 +1415,21 @@ function saveDriveConfig() {
   localStorage.setItem('driveApiKey', driveConfig.apiKey);
   localStorage.setItem('driveFolderId', driveConfig.folderId);
   localStorage.setItem('driveClientId', driveConfig.clientId);
+  // Save Sheets URL
+  const sheetsInput = document.getElementById('sheetsUrlInput');
+  if (sheetsInput && sheetsInput.value.trim()) {
+    SHEETS_URL = sheetsInput.value.trim();
+    localStorage.setItem('yoav_sheets_url', SHEETS_URL);
+    console.log('Sheets URL saved:', SHEETS_URL);
+  }
   closeModal('driveSetupModal');
   updateDriveStatusBadge();
-  showToast(lang==='he' ? '☁️ הגדרות Drive נשמרו' : '☁️ Drive settings saved');
+  if (SHEETS_URL) {
+    loadFromSheets();
+    showToast('☁️ הגדרות נשמרו + טוען נתונים...');
+  } else {
+    showToast(lang==='he' ? '☁️ הגדרות Drive נשמרו' : '☁️ Drive settings saved');
+  }
 }
 
 async function handleDriveUpload(files) {
