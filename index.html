@@ -914,6 +914,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
   <button class="btn btn-gold" onclick="openUploadModal('photo')">📷 <span data-he>תמונה</span><span data-en>Photo</span></button>
   <button class="btn btn-sky" onclick="openUploadModal('video')">🎬 <span data-he>סרטון</span><span data-en>Video</span></button>
   <button class="btn btn-outline" onclick="document.querySelectorAll('.admin-only').forEach(el=>el.style.display=el.style.display==='none'?'block':'none')">⚙️ <span data-he>כלי עריכה</span><span data-en>Edit Tools</span></button>
+  <button class="btn btn-outline" onclick="openDriveSetup()" style="background:rgba(201,168,76,0.15);border-color:rgba(201,168,76,0.4);color:#E8D5A3;margin-right:8px;">☁️ <span data-he>הגדר Drive</span><span data-en>Setup Drive</span></button>
   <div class="admin-bar-label" id="adminBarLabel"></div>
 </div>
 
@@ -925,15 +926,15 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
 // CONFIGURATION — CHANGE BEFORE PUBLISHING
 // ══════════════════════════════════
 const USERS = {
-  'tzafrir': {
-    pass: 'yoav2024',
+  'admin': {
+    pass: 'admin123',      // ← CHANGE THIS PASSWORD
     role: 'admin',
-    name: 'צפריר'
+    name: 'מנהל'           // ← CHANGE TO YOUR NAME (e.g., "Tzafrir")
   },
   'lilach': {
-    pass: 'lilach2024',
+    pass: 'lilach123',     // ← CHANGE THIS PASSWORD
     role: 'admin',
-    name: 'לילך (אמא)'
+    name: 'לילך (אמא)'    // ← Lilach's account
   }
 };
 
