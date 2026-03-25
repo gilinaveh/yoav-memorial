@@ -903,6 +903,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
   <button class="btn btn-sky" onclick="openUploadModal('video')">🎬 <span data-he>סרטון</span><span data-en>Video</span></button>
   <button class="btn btn-outline" onclick="document.querySelectorAll('.admin-only').forEach(el=>el.style.display=el.style.display==='none'?'block':'none')">⚙️ <span data-he>כלי עריכה</span><span data-en>Edit Tools</span></button>
   <button class="btn btn-outline" onclick="openDriveSetup()" style="background:rgba(201,168,76,0.15);border-color:rgba(201,168,76,0.4);color:#E8D5A3;margin-right:8px;">☁️ <span data-he>הגדר Drive</span><span data-en>Setup Drive</span></button>
+  <button class="btn btn-outline" onclick="loadFromSheets(true)" style="background:rgba(39,174,96,0.15);border-color:rgba(39,174,96,0.4);color:#7DCEA0;margin-right:8px;">⬇ <span data-he>טען מ-Sheets</span><span data-en>Load from Sheets</span></button>
   <div class="admin-bar-label" id="adminBarLabel"></div>
 </div>
 
@@ -945,33 +946,59 @@ let siteData = {
 };
 
 async function saveToSheets() {
-  if (!SHEETS_URL) return;
+  if (!SHEETS_URL) { console.warn('No SHEETS_URL set'); return; }
   try {
     const body = JSON.stringify(siteData);
-    await fetch(SHEETS_URL, {
+    const res = await fetch(SHEETS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: body
     });
-    showToast(lang === 'he' ? '✓ נשמר' : '✓ Saved');
+    const txt = await res.text();
+    let json = {};
+    try { json = JSON.parse(txt); } catch(e) {}
+    if (json.status === 'ok') {
+      showToast('✓ נשמר בהצלחה ב-Sheets');
+    } else if (json.error) {
+      showToast('❌ שגיאה: ' + json.error);
+      console.error('Sheets error:', json.error);
+    } else {
+      showToast('✓ נשמר');
+    }
   } catch(e) {
+    showToast('❌ שגיאת חיבור: ' + e.message);
     console.error('Save error:', e);
   }
 }
 
-async function loadFromSheets() {
-  if (!SHEETS_URL) return;
+async function loadFromSheets(showAlert=false) {
+  if (!SHEETS_URL) { 
+    if(showAlert) alert('No Sheets URL configured');
+    return; 
+  }
   try {
     const res = await fetch(SHEETS_URL + '?action=load&t=' + Date.now(), {
       method: 'GET', redirect: 'follow'
     });
     const text = await res.text();
     let payload;
-    try { payload = JSON.parse(text); } catch(e) { return; }
-    if (payload.status === 'empty' || !payload.photos) return;
+    try { payload = JSON.parse(text); } catch(e) { 
+      if(showAlert) alert('Bad response: ' + text.slice(0,100));
+      return; 
+    }
+    if (payload.status === 'empty') {
+      if(showAlert) alert('Sheets is empty - no data saved yet');
+      return;
+    }
+    if (!payload.photos) {
+      if(showAlert) alert('No photos key. Keys: ' + Object.keys(payload).join(', '));
+      return;
+    }
     siteData = payload;
     renderAllFromData();
+    if(showAlert) alert('Loaded! Photos: ' + siteData.photos.length);
   } catch(e) {
+    if(showAlert) alert('Load error: ' + e.message);
     console.error('Load error:', e);
   }
 }
