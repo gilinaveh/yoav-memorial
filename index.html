@@ -1174,7 +1174,11 @@ function addPhotoToGallery(src, caption) {
   // Add the photo
   const item = document.createElement('div');
   item.className = 'gallery-item';
-  item.innerHTML = `<img class="gallery-img" src="${src}" alt="${caption||''}" onclick="openLightbox(this)" onerror="this.parentElement.innerHTML='<div class=gallery-placeholder><div class=icon>❌</div></div>'">`;
+  item.style.position = 'relative';
+  item.innerHTML = `
+    <img class="gallery-img" src="${src}" alt="${caption||''}" onclick="openLightbox(this)" onerror="this.parentElement.innerHTML='<div class=gallery-placeholder><div class=icon>❌</div></div>'">
+    ${currentUser && currentUser.role === 'admin' ? `<button onclick="this.parentElement.remove()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:50%;width:26px;height:26px;font-size:14px;cursor:pointer;line-height:1;z-index:10;" title="הסר תמונה">✕</button>` : ''}
+  `;
   grid.appendChild(item);
   // Add one upload slot at the end for admins
   if (currentUser && currentUser.role === 'admin') {
