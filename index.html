@@ -761,6 +761,11 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
     <button class="modal-close" onclick="closeModal('driveSetupModal')">×</button>
     <div class="modal-title">☁️ <span data-he>הגדרת Google Drive</span><span data-en>Google Drive Setup</span></div>
     <div class="modal-subtitle"><span data-he>הגדר פעם אחת — ואחסן לנצח</span><span data-en>Set up once — store forever</span></div>
+    <div class="form-group" style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid rgba(201,168,76,0.2);">
+      <label style="color:var(--gold-light);font-weight:700;"><span data-he>🔗 Google Sheets URL — לשמירת תוכן האתר</span><span data-en>🔗 Google Sheets URL — for saving site content</span></label>
+      <input id="sheetsUrlInput" type="text" placeholder="https://script.google.com/macros/s/.../exec" style="margin-top:0.4rem;">
+      <div style="font-size:0.75rem;color:var(--text-light);margin-top:0.3rem;"><span data-he>ישמור תמונות, סיפורים, תגובות ונרות לצמיתות לכל המבקרים</span><span data-en>Saves photos, stories, comments and candles permanently for all visitors</span></div>
+    </div>
     <div class="form-group" style="margin-bottom:1rem;">
       <label><span data-he>Google API Key</span><span data-en>Google API Key</span></label>
       <input id="driveApiKey" type="text" placeholder="AIzaSy..." value="">
@@ -928,6 +933,75 @@ let driveConfig = {
 };
 
 // ══════════════════════════════════
+// SHEETS SYNC CONFIG
+// ══════════════════════════════════
+let SHEETS_URL = localStorage.getItem('yoav_sheets_url') || '';
+let siteData = {
+  photos: [],    // [{src, caption}]
+  stories: [],   // [{author, text, date}]
+  candles: [],   // [name, name, ...]
+  comments: [],  // [{author, text, date}]
+  videos: []     // [{title, url}]
+};
+
+async function saveToSheets() {
+  if (!SHEETS_URL) return;
+  try {
+    const body = JSON.stringify(siteData);
+    await fetch(SHEETS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: body
+    });
+    showToast(lang === 'he' ? '✓ נשמר' : '✓ Saved');
+  } catch(e) {
+    console.error('Save error:', e);
+  }
+}
+
+async function loadFromSheets() {
+  if (!SHEETS_URL) return;
+  try {
+    const res = await fetch(SHEETS_URL + '?action=load&t=' + Date.now(), {
+      method: 'GET', redirect: 'follow'
+    });
+    const text = await res.text();
+    let payload;
+    try { payload = JSON.parse(text); } catch(e) { return; }
+    if (payload.status === 'empty' || !payload.photos) return;
+    siteData = payload;
+    renderAllFromData();
+  } catch(e) {
+    console.error('Load error:', e);
+  }
+}
+
+function renderAllFromData() {
+  // Render photos
+  const grid = document.getElementById('galleryGrid');
+  if (grid) {
+    grid.innerHTML = '';
+    siteData.photos.forEach(p => addPhotoToGallery(p.src, p.caption, false));
+    if (currentUser && currentUser.role === 'admin') {
+      const slot = document.createElement('div');
+      slot.className = 'gallery-item upload-slot';
+      slot.onclick = () => adminUploadClick('photo');
+      slot.innerHTML = '<div class="gallery-placeholder"><div class="icon">📷</div><div class="label">הוסף תמונה</div></div>';
+      grid.appendChild(slot);
+    }
+  }
+  // Render stories
+  siteData.stories.forEach(s => renderStoryItem(s.author, s.text, s.date, false));
+  // Render candles
+  candles = siteData.candles || [];
+  renderCandles();
+  // Render comments
+  siteData.comments.forEach(c => renderCommentItem(c.author, c.text, c.date, false));
+  // Render videos
+  siteData.videos.forEach(v => addVideoToGrid(v.title, v.url, false));
+}
+
+// ══════════════════════════════════
 // STATE
 // ══════════════════════════════════
 let currentUser = null;
@@ -1024,7 +1098,9 @@ function applyAuth() {
 function lightCandle() {
   const name = document.getElementById('candleName').value.trim() || (lang==='he' ? 'אנונימי' : 'Anonymous');
   candles.push(name);
+  siteData.candles = candles;
   renderCandles();
+  saveToSheets();
   document.getElementById('candleName').value = '';
   showToast(lang==='he' ? '🕯️ הנר הודלק — יואב יזכר תמיד' : '🕯️ Candle lit — Yoav will always be remembered');
 }
@@ -1050,31 +1126,44 @@ function submitComment() {
   const relation = document.getElementById('commentRelation').value.trim();
   const text = document.getElementById('commentText').value.trim();
   if (!name || !text) { showToast(lang==='he' ? 'אנא מלא שם ומסר' : 'Please fill in name and message'); return; }
-
-  const container = document.getElementById('commentsContainer');
-  const idx = Math.floor(Math.random()*4);
-  const initial = name.charAt(0);
   const dateStr = new Date().toLocaleDateString('he-IL');
+  renderCommentItem(name, relation, text, dateStr, true);
+  document.getElementById('commentName').value = '';
+  document.getElementById('commentRelation').value = '';
+  document.getElementById('commentText').value = '';
+  showToast(lang==='he' ? '💙 המסר נשמר — תודה שזכרת את יואב' : '💙 Message saved — thank you for remembering Yoav');
+}
 
+function renderCommentItem(name, relation, text, dateStr, save=true) {
+  const container = document.getElementById('commentsContainer');
+  const colorIdx = Math.floor(Math.random()*4);
+  const initial = name.charAt(0);
   const box = document.createElement('div');
   box.className = 'comment-box';
   box.style.animation = 'modal-in 0.3s ease';
   box.innerHTML = `
     <div class="comment-header">
-      <div class="avatar" style="background:${avatarColors[idx]};color:${avatarTextColors[idx]};">${initial}</div>
+      <div class="avatar" style="background:${avatarColors[colorIdx]};color:${avatarTextColors[colorIdx]};">${initial}</div>
       <div class="comment-meta">
         <div class="comment-author">${name}${relation ? ' ('+relation+')' : ''}</div>
         <div class="comment-date">${dateStr}</div>
       </div>
-      ${currentUser?.role==='admin' ? `<button class="btn btn-danger" onclick="this.closest('.comment-box').remove()">🗑</button>` : ''}
+      ${currentUser?.role==='admin' ? `<button class="btn btn-danger" onclick="removeComment(this, '${name}', '${text.slice(0,20)}')">🗑</button>` : ''}
     </div>
     <div class="comment-text">${text}</div>
   `;
   container.appendChild(box);
-  document.getElementById('commentName').value = '';
-  document.getElementById('commentRelation').value = '';
-  document.getElementById('commentText').value = '';
-  showToast(lang==='he' ? '💙 המסר נשמר — תודה שזכרת את יואב' : '💙 Message saved — thank you for remembering Yoav');
+  if (save) {
+    siteData.comments.push({name, relation, text, date: dateStr});
+    saveToSheets();
+  }
+}
+
+function removeComment(btn, name, textStart) {
+  if (!confirm(lang==='he' ? 'למחוק מסר זה?' : 'Delete this message?')) return;
+  btn.closest('.comment-box').remove();
+  siteData.comments = siteData.comments.filter(c => !(c.name === name && c.text.startsWith(textStart)));
+  saveToSheets();
 }
 
 // ══════════════════════════════════
@@ -1084,20 +1173,39 @@ function addStory() {
   const author = document.getElementById('storyAuthor').value.trim();
   const text = document.getElementById('storyText').value.trim();
   if (!text) return;
+  const date = new Date().toLocaleDateString('he-IL');
+  const story = {author, text, date};
+  renderStoryItem(author, text, date, true);
+  document.getElementById('storyAuthor').value = '';
+  document.getElementById('storyText').value = '';
+  showToast(lang==='he' ? '✨ הסיפור פורסם' : '✨ Story published');
+}
+
+function renderStoryItem(author, text, date, save=true) {
   const container = document.getElementById('storiesContainer');
   const block = document.createElement('div');
   block.className = 'story-block';
   block.style.animation = 'modal-in 0.3s ease';
+  const id = Date.now() + Math.random();
   block.innerHTML = `
     <div class="quote-mark">"</div>
     <p class="story-text">${text}</p>
     ${author ? `<div style="margin-top:1rem;font-size:0.85rem;color:var(--gold);font-weight:500;">— ${author}</div>` : ''}
-    <button class="btn btn-danger" style="margin-top:0.5rem;" onclick="this.closest('.story-block').remove()">🗑 מחק</button>
+    <div style="font-size:0.75rem;color:var(--text-light);margin-top:0.25rem;">${date||''}</div>
+    ${currentUser && currentUser.role === 'admin' ? `<button class="btn btn-danger" style="margin-top:0.5rem;" onclick="removeStory(this, '${author}', '${text.slice(0,20)}')">🗑 מחק</button>` : ''}
   `;
   container.appendChild(block);
-  document.getElementById('storyAuthor').value = '';
-  document.getElementById('storyText').value = '';
-  showToast(lang==='he' ? '✨ הסיפור פורסם' : '✨ Story published');
+  if (save) {
+    siteData.stories.push({author, text, date});
+    saveToSheets();
+  }
+}
+
+function removeStory(btn, author, textStart) {
+  if (!confirm(lang==='he' ? 'למחוק סיפור זה?' : 'Delete this story?')) return;
+  btn.closest('.story-block').remove();
+  siteData.stories = siteData.stories.filter(s => !(s.author === author && s.text.startsWith(textStart)));
+  saveToSheets();
 }
 
 // ══════════════════════════════════
@@ -1167,20 +1275,17 @@ function submitUrl() {
   showToast(currentUploadType==='photo' ? '📷 תמונה נוספה' : '🎬 סרטון נוסף');
 }
 
-function addPhotoToGallery(src, caption) {
+function addPhotoToGallery(src, caption, save=true) {
   const grid = document.getElementById('galleryGrid');
-  // Remove any existing upload slots
   grid.querySelectorAll('.upload-slot').forEach(el => el.remove());
-  // Add the photo
   const item = document.createElement('div');
   item.className = 'gallery-item';
   item.style.position = 'relative';
-  item.innerHTML = `
-    <img class="gallery-img" src="${src}" alt="${caption||''}" onclick="openLightbox(this)" onerror="this.parentElement.innerHTML='<div class=gallery-placeholder><div class=icon>❌</div></div>'">
-    ${currentUser && currentUser.role === 'admin' ? `<button onclick="this.parentElement.remove()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:50%;width:26px;height:26px;font-size:14px;cursor:pointer;line-height:1;z-index:10;" title="הסר תמונה">✕</button>` : ''}
-  `;
+  const deleteBtn = currentUser && currentUser.role === 'admin'
+    ? `<button onclick="removePhoto(this, '${src}')" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:50%;width:26px;height:26px;font-size:14px;cursor:pointer;z-index:10;">✕</button>`
+    : '';
+  item.innerHTML = `<img class="gallery-img" src="${src}" alt="${caption||''}" onclick="openLightbox(this)" onerror="this.parentElement.style.display='none'">${deleteBtn}`;
   grid.appendChild(item);
-  // Add one upload slot at the end for admins
   if (currentUser && currentUser.role === 'admin') {
     const slot = document.createElement('div');
     slot.className = 'gallery-item upload-slot';
@@ -1188,6 +1293,17 @@ function addPhotoToGallery(src, caption) {
     slot.innerHTML = '<div class="gallery-placeholder"><div class="icon">📷</div><div class="label">הוסף תמונה</div></div>';
     grid.appendChild(slot);
   }
+  if (save) {
+    siteData.photos.push({src, caption: caption||''});
+    saveToSheets();
+  }
+}
+
+function removePhoto(btn, src) {
+  if (!confirm(lang==='he' ? 'להסיר תמונה זו?' : 'Remove this photo?')) return;
+  btn.parentElement.remove();
+  siteData.photos = siteData.photos.filter(p => p.src !== src);
+  saveToSheets();
 }
 
 function addVideoToGrid(title, url) {
@@ -1261,6 +1377,7 @@ function openDriveSetup() {
   document.getElementById('driveApiKey').value = driveConfig.apiKey;
   document.getElementById('driveFolderId').value = driveConfig.folderId;
   document.getElementById('driveClientId').value = driveConfig.clientId;
+  document.getElementById('sheetsUrlInput').value = SHEETS_URL || '';
   document.getElementById('driveSetupModal').classList.add('open');
 }
 
@@ -1400,6 +1517,8 @@ document.addEventListener('keydown', e => {
     closeLightbox();
   }
 });
+
+window.addEventListener('DOMContentLoaded', () => { if (SHEETS_URL) loadFromSheets(); });
 </script>
 </body>
 </html>
