@@ -481,24 +481,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
   <div class="divider"></div>
 
   <div class="gallery-grid" id="galleryGrid">
-    <div class="gallery-item upload-slot" onclick="adminUploadClick('photo')">
-      <div class="gallery-placeholder"><div class="icon">📷</div><div class="label"><span data-he>הוסף תמונה</span><span data-en>Add Photo</span></div></div>
-    </div>
-    <div class="gallery-item upload-slot" onclick="adminUploadClick('photo')">
-      <div class="gallery-placeholder"><div class="icon">🖼️</div><div class="label"><span data-he>תמונה</span><span data-en>Photo</span></div></div>
-    </div>
-    <div class="gallery-item upload-slot" onclick="adminUploadClick('photo')">
-      <div class="gallery-placeholder"><div class="icon">📷</div><div class="label"><span data-he>הוסף תמונה</span><span data-en>Add Photo</span></div></div>
-    </div>
-    <div class="gallery-item upload-slot" onclick="adminUploadClick('photo')">
-      <div class="gallery-placeholder"><div class="icon">🖼️</div><div class="label"><span data-he>תמונה</span><span data-en>Photo</span></div></div>
-    </div>
-    <div class="gallery-item upload-slot" onclick="adminUploadClick('photo')">
-      <div class="gallery-placeholder"><div class="icon">📷</div><div class="label"><span data-he>הוסף תמונה</span><span data-en>Add Photo</span></div></div>
-    </div>
-    <div class="gallery-item upload-slot" onclick="adminUploadClick('photo')">
-      <div class="gallery-placeholder"><div class="icon">🌟</div><div class="label"><span data-he>יואב שלנו</span><span data-en>Our Yoav</span></div></div>
-    </div>
+    <!-- Photos will appear here when added by admin -->
   </div>
 
   <div style="text-align:center;margin-top:2rem;" class="admin-only" style="display:none;">
@@ -1018,6 +1001,15 @@ function applyAuth() {
   document.getElementById('statusText').textContent = (lang==='he' ? 'מחובר: ' : 'Logged in: ') + currentUser.name + ' 🔑';
   document.getElementById('loginBtn').style.display = 'none';
   updateDriveStatusBadge();
+  // Initialize gallery with upload slot for admin
+  const grid = document.getElementById('galleryGrid');
+  if (grid && grid.children.length === 0) {
+    const slot = document.createElement('div');
+    slot.className = 'gallery-item upload-slot';
+    slot.onclick = () => adminUploadClick('photo');
+    slot.innerHTML = '<div class="gallery-placeholder"><div class="icon">📷</div><div class="label">הוסף תמונה</div></div>';
+    grid.appendChild(slot);
+  }
 
   if (currentUser.role === 'admin') {
     document.getElementById('adminBar').classList.add('visible');
@@ -1177,10 +1169,21 @@ function submitUrl() {
 
 function addPhotoToGallery(src, caption) {
   const grid = document.getElementById('galleryGrid');
+  // Remove any existing upload slots
+  grid.querySelectorAll('.upload-slot').forEach(el => el.remove());
+  // Add the photo
   const item = document.createElement('div');
   item.className = 'gallery-item';
-  item.innerHTML = `<img class="gallery-img" src="${src}" alt="${caption}" onclick="openLightbox(this)" onerror="this.parentElement.innerHTML='<div class=gallery-placeholder><div class=icon>❌</div></div>'">`;
+  item.innerHTML = `<img class="gallery-img" src="${src}" alt="${caption||''}" onclick="openLightbox(this)" onerror="this.parentElement.innerHTML='<div class=gallery-placeholder><div class=icon>❌</div></div>'">`;
   grid.appendChild(item);
+  // Add one upload slot at the end for admins
+  if (currentUser && currentUser.role === 'admin') {
+    const slot = document.createElement('div');
+    slot.className = 'gallery-item upload-slot';
+    slot.onclick = () => adminUploadClick('photo');
+    slot.innerHTML = '<div class="gallery-placeholder"><div class="icon">📷</div><div class="label">הוסף תמונה</div></div>';
+    grid.appendChild(slot);
+  }
 }
 
 function addVideoToGrid(title, url) {
