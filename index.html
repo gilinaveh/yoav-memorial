@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>לזכרו של יואב אגמון | In Memory of Yoav Agmon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300;400;500;700;900&family=Heebo:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #C9A84C;
+  --gold-light: #E8D5A3;
+  --gold-dark: #8B6914;
+  --deep-blue: #0D1B2A;
+  --navy: #162035;
+  --navy-mid: #1E2D45;
+  --sky: #4A7FA5;
+  --sky-light: #A8C5DA;
+  --cream: #F5EDD6;
+  --cream-dark: #EDD9A3;
+  --white: #FDFAF4;
+  --text-main: #1A1208;
+  --text-muted: #6B5B3E;
+  --text-light: #A08C6E;
+  --danger: #C0392B;
+  --success: #27AE60;
+  --radius: 12px;
+  --radius-sm: 6px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Heebo', 'Frank Ruhl Libre', sans-serif;
+  background: var(--deep-blue);
+  color: var(--white);
+  min-height: 100vh;
+  direction: rtl;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse at 20% 20%, rgba(74,127,165,0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(201,168,76,0.08) 0%, transparent 50%),
+    var(--deep-blue);
+  pointer-events: none;
+  z-index: 0;
+}
+
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(13,27,42,0.97);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(201,168,76,0.2);
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.nav-logo {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.nav-links {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.nav-links a, .nav-links button {
+  font-family: 'Heebo', sans-serif;
+  font-size: 0.82rem;
+  color: var(--sky-light);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem 0.65rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+.nav-links a:hover, .nav-links button:hover { background: rgba(201,168,76,0.1); color: var(--gold-light); }
+
+.lang-toggle {
+  font-size: 0.75rem !important;
+  border: 1px solid rgba(201,168,76,0.3) !important;
+  padding: 0.3rem 0.6rem !important;
+  border-radius: 20px !important;
+}
+
+.hero {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6rem 2rem 4rem;
+  overflow: hidden;
+}
+
+.hero-stars { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+
+.star {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle var(--d, 3s) ease-in-out infinite var(--delay, 0s);
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.5); }
+}
+
+.hero-emblem {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  background: rgba(201,168,76,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  margin: 0 auto 2rem;
+  animation: pulse-glow 4s ease-in-out infinite;
+  position: relative;
+}
+
+.hero-emblem::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 1px solid rgba(201,168,76,0.2);
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(201,168,76,0.2); }
+  50% { box-shadow: 0 0 40px rgba(201,168,76,0.4), 0 0 80px rgba(201,168,76,0.1); }
+}
+
+.hero-dates { font-size: 0.85rem; color: var(--gold); letter-spacing: 0.2em; margin-bottom: 1rem; font-weight: 300; }
+.hero-name { font-family: 'Frank Ruhl Libre', serif; font-size: clamp(3rem, 8vw, 6rem); font-weight: 900; line-height: 1; color: var(--white); margin-bottom: 0.5rem; text-shadow: 0 0 60px rgba(201,168,76,0.3); }
+.hero-name-en { font-family: 'Playfair Display', serif; font-size: clamp(1.2rem, 3vw, 1.8rem); font-weight: 400; font-style: italic; color: var(--sky-light); margin-bottom: 2rem; }
+.hero-tagline { font-size: 1.1rem; color: var(--cream); max-width: 600px; line-height: 1.8; font-weight: 300; }
+.hero-tagline strong { color: var(--gold-light); font-weight: 500; }
+
+.hero-scroll { margin-top: 4rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; color: var(--text-light); font-size: 0.8rem; animation: bounce 2s ease-in-out infinite; }
+
+@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+
+.scroll-arrow { width: 20px; height: 20px; border-right: 1.5px solid var(--gold); border-bottom: 1.5px solid var(--gold); transform: rotate(45deg); }
+
+.section { position: relative; z-index: 1; padding: 5rem 2rem; max-width: 1100px; margin: 0 auto; }
+.section-title { font-family: 'Frank Ruhl Libre', serif; font-size: 2rem; font-weight: 700; color: var(--gold); text-align: center; margin-bottom: 0.5rem; }
+.section-subtitle { font-size: 0.9rem; color: var(--sky-light); text-align: center; margin-bottom: 3rem; font-style: italic; }
+.divider { width: 60px; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); margin: 0.75rem auto 3rem; }
+
+.about-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }
+
+.about-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,168,76,0.15);
+  border-radius: var(--radius);
+  padding: 1.75rem 1.5rem;
+  text-align: center;
+  transition: all 0.3s;
+}
+.about-card:hover { background: rgba(201,168,76,0.07); border-color: rgba(201,168,76,0.3); transform: translateY(-4px); }
+.card-icon { font-size: 2.2rem; margin-bottom: 1rem; display: block; }
+.card-title { font-family: 'Frank Ruhl Libre', serif; font-size: 1.1rem; font-weight: 700; color: var(--gold-light); margin-bottom: 0.5rem; }
+.card-text { font-size: 0.9rem; color: var(--sky-light); line-height: 1.7; }
+
+.story-block { background: rgba(255,255,255,0.03); border-right: 3px solid var(--gold); border-radius: 0 var(--radius) var(--radius) 0; padding: 2rem 2rem 2rem 1.5rem; margin-bottom: 2rem; position: relative; }
+.story-block .quote-mark { font-family: 'Playfair Display', serif; font-size: 5rem; color: rgba(201,168,76,0.2); position: absolute; top: -1rem; left: 1rem; line-height: 1; }
+.story-text { font-size: 1.05rem; line-height: 2; color: var(--cream); }
+
+/* Gallery */
+.gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+
+.gallery-item {
+  aspect-ratio: 1;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,168,76,0.15);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  overflow: hidden;
+  position: relative;
+}
+.gallery-item:hover { border-color: var(--gold); transform: scale(1.02); }
+.gallery-item.upload-slot { border-style: dashed; }
+.gallery-item.upload-slot:hover { background: rgba(201,168,76,0.05); }
+.gallery-placeholder { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; color: var(--text-light); }
+.gallery-placeholder .icon { font-size: 2rem; }
+.gallery-placeholder .label { font-size: 0.75rem; text-align: center; padding: 0 0.5rem; }
+.gallery-img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Lightbox */
+.lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.92);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.lightbox.open { display: flex; }
+.lightbox img { max-width: 90vw; max-height: 85vh; object-fit: contain; border-radius: var(--radius); }
+.lightbox-close { position: absolute; top: 1.5rem; right: 1.5rem; background: rgba(201,168,76,0.2); border: 1px solid var(--gold); color: var(--gold); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+.lightbox-caption { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); color: var(--cream); font-size: 0.9rem; text-align: center; }
+
+/* Timeline */
+.timeline { position: relative; padding-right: 2rem; }
+.timeline::before { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 1px; background: linear-gradient(to bottom, transparent, var(--gold), var(--sky), transparent); }
+.timeline-item { position: relative; margin-bottom: 2.5rem; padding-right: 2rem; }
+.timeline-dot { position: absolute; right: -6px; top: 6px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--gold); background: var(--deep-blue); }
+.timeline-year { font-size: 0.8rem; color: var(--gold); letter-spacing: 0.1em; margin-bottom: 0.25rem; font-weight: 500; }
+.timeline-title { font-family: 'Frank Ruhl Libre', serif; font-size: 1.1rem; color: var(--white); margin-bottom: 0.25rem; }
+.timeline-desc { font-size: 0.9rem; color: var(--sky-light); line-height: 1.7; }
+
+/* Comments */
+.comment-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(201,168,76,0.15); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; transition: border-color 0.2s; }
+.comment-box:hover { border-color: rgba(201,168,76,0.3); }
+.comment-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+.comment-meta { flex: 1; }
+.comment-author { font-weight: 500; color: var(--gold-light); font-size: 0.95rem; }
+.comment-date { font-size: 0.78rem; color: var(--text-light); }
+.comment-text { font-size: 0.95rem; color: var(--cream); line-height: 1.8; }
+
+.comment-form { background: rgba(255,255,255,0.03); border: 1px solid rgba(201,168,76,0.2); border-radius: var(--radius); padding: 2rem; margin-top: 2rem; }
+.form-title { font-family: 'Frank Ruhl Libre', serif; font-size: 1.3rem; color: var(--gold); margin-bottom: 1.25rem; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+.form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+
+label { font-size: 0.8rem; color: var(--sky-light); font-weight: 500; }
+
+input, textarea, select {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.85rem;
+  color: var(--white);
+  font-family: 'Heebo', sans-serif;
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+  direction: rtl;
+}
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--gold); background: rgba(201,168,76,0.05); }
+textarea { resize: vertical; min-height: 120px; }
+input::placeholder, textarea::placeholder { color: var(--text-light); }
+
+/* Buttons */
+.btn { font-family: 'Heebo', sans-serif; font-size: 0.9rem; font-weight: 500; padding: 0.65rem 1.5rem; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s; border: none; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; }
+.btn-gold { background: var(--gold); color: var(--deep-blue); }
+.btn-gold:hover { background: var(--gold-light); transform: translateY(-1px); }
+.btn-outline { background: transparent; color: var(--gold); border: 1px solid var(--gold); }
+.btn-outline:hover { background: rgba(201,168,76,0.1); }
+.btn-danger { background: transparent; color: #E74C3C; border: 1px solid rgba(231,76,60,0.3); font-size: 0.8rem; padding: 0.3rem 0.8rem; }
+.btn-sky { background: rgba(74,127,165,0.2); color: var(--sky-light); border: 1px solid rgba(74,127,165,0.3); }
+.btn-sky:hover { background: rgba(74,127,165,0.35); }
+
+/* Upload area */
+.upload-area {
+  border: 2px dashed rgba(201,168,76,0.3);
+  border-radius: var(--radius);
+  padding: 2.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+}
+.upload-area:hover, .upload-area.drag-over { border-color: var(--gold); background: rgba(201,168,76,0.05); }
+.upload-area input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.upload-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+.upload-text { color: var(--sky-light); font-size: 0.9rem; line-height: 1.7; }
+.upload-text strong { color: var(--gold); }
+
+/* Progress bar */
+.upload-progress { background: rgba(255,255,255,0.06); border-radius: 4px; height: 6px; margin-top: 1rem; overflow: hidden; display: none; }
+.upload-progress-bar { height: 100%; background: var(--gold); border-radius: 4px; transition: width 0.3s; }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center; padding: 2rem; backdrop-filter: blur(4px); }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--navy); border: 1px solid rgba(201,168,76,0.3); border-radius: var(--radius); padding: 2.5rem; width: 100%; max-width: 480px; position: relative; animation: modal-in 0.25s ease; max-height: 90vh; overflow-y: auto; }
+
+@keyframes modal-in { from { transform: scale(0.95) translateY(10px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+
+.modal-close { position: absolute; top: 1rem; left: 1rem; background: none; border: none; color: var(--text-light); font-size: 1.5rem; cursor: pointer; line-height: 1; transition: color 0.2s; }
+.modal-close:hover { color: var(--white); }
+.modal-title { font-family: 'Frank Ruhl Libre', serif; font-size: 1.5rem; color: var(--gold); margin-bottom: 0.5rem; }
+.modal-subtitle { font-size: 0.85rem; color: var(--sky-light); margin-bottom: 1.5rem; }
+
+/* Admin upload modal */
+.upload-modal { max-width: 600px !important; }
+.tab-bar { display: flex; background: rgba(255,255,255,0.04); border-radius: var(--radius-sm); padding: 4px; gap: 4px; margin-bottom: 1.5rem; }
+.tab-btn { flex: 1; padding: 0.5rem; text-align: center; border-radius: 4px; cursor: pointer; font-size: 0.85rem; color: var(--sky-light); transition: all 0.2s; border: none; background: none; font-family: 'Heebo', sans-serif; }
+.tab-btn.active { background: var(--gold); color: var(--deep-blue); font-weight: 700; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Admin bar */
+.admin-bar { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 500; background: rgba(22,32,53,0.98); border-top: 1px solid rgba(201,168,76,0.3); padding: 0.75rem 2rem; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.admin-bar.visible { display: flex; }
+.admin-bar-label { font-size: 0.8rem; color: var(--gold); font-weight: 500; margin-left: auto; }
+
+/* User status */
+.user-status { display: none; background: rgba(201,168,76,0.08); border-bottom: 1px solid rgba(201,168,76,0.15); padding: 0.4rem 2rem; font-size: 0.8rem; color: var(--gold-light); text-align: center; gap: 0.5rem; align-items: center; justify-content: center; }
+.user-status.visible { display: flex; }
+
+/* Drive status */
+.drive-status { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; padding: 0.25rem 0.7rem; border-radius: 20px; }
+.drive-status.connected { background: rgba(39,174,96,0.15); color: #7DCEA0; border: 1px solid rgba(39,174,96,0.3); }
+.drive-status.disconnected { background: rgba(201,168,76,0.1); color: var(--gold); border: 1px solid rgba(201,168,76,0.2); cursor: pointer; }
+
+/* Candles */
+.candle-section { text-align: center; padding: 3rem 0; }
+.candle-count { font-family: 'Frank Ruhl Libre', serif; font-size: 3rem; color: var(--gold); font-weight: 700; }
+.candle-label { font-size: 0.9rem; color: var(--sky-light); margin-bottom: 2rem; }
+.candles-row { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem; }
+.candle { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; transition: transform 0.2s; }
+.candle:hover { transform: scale(1.1); }
+.candle-flame { width: 8px; height: 14px; background: radial-gradient(ellipse at center bottom, #FFD700, #FF6B00); border-radius: 50% 50% 30% 30%; animation: flicker var(--f, 1.5s) ease-in-out infinite var(--fd, 0s); }
+@keyframes flicker { 0%, 100% { transform: scaleX(1) scaleY(1); } 33% { transform: scaleX(0.8) scaleY(1.1); } 66% { transform: scaleX(1.1) scaleY(0.9); } }
+.candle-body { width: 14px; height: 30px; background: linear-gradient(to right, #F5E6C8, #EDD9A3, #C9A84C); border-radius: 2px; }
+.candle-name { font-size: 0.6rem; color: var(--text-light); max-width: 50px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Buzz tribute */
+.buzz-tribute { background: rgba(74,127,165,0.08); border: 1px solid rgba(74,127,165,0.2); border-radius: var(--radius); padding: 2rem; text-align: center; margin: 2rem 0; }
+.buzz-quote { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-style: italic; color: var(--gold-light); margin-bottom: 0.5rem; line-height: 1.6; }
+.buzz-attribution { font-size: 0.85rem; color: var(--sky-light); }
+
+/* Video grid */
+.video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; }
+.video-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(201,168,76,0.15); border-radius: var(--radius); overflow: hidden; transition: all 0.3s; }
+.video-card:hover { border-color: rgba(201,168,76,0.3); transform: translateY(-2px); }
+.video-thumb { aspect-ratio: 16/9; background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
+.play-btn { width: 56px; height: 56px; border-radius: 50%; background: rgba(201,168,76,0.9); display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
+.video-thumb:hover .play-btn { transform: scale(1.1); }
+.play-icon { width: 0; height: 0; border-style: solid; border-width: 10px 0 10px 18px; border-color: transparent transparent transparent var(--deep-blue); margin-right: -3px; }
+.video-info { padding: 1rem; }
+.video-title { font-weight: 500; font-size: 0.95rem; color: var(--white); margin-bottom: 0.25rem; }
+.video-meta { font-size: 0.8rem; color: var(--text-light); }
+
+/* Footer */
+footer { position: relative; z-index: 1; text-align: center; padding: 3rem 2rem 6rem; border-top: 1px solid rgba(201,168,76,0.15); margin-top: 4rem; }
+.footer-text { font-family: 'Frank Ruhl Libre', serif; font-size: 1.2rem; color: var(--gold); margin-bottom: 0.5rem; }
+.footer-sub { font-size: 0.85rem; color: var(--text-light); line-height: 1.8; }
+
+/* Toast */
+.toast { position: fixed; bottom: 5rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--navy-mid); border: 1px solid var(--gold); color: var(--gold-light); padding: 0.75rem 1.5rem; border-radius: 30px; font-size: 0.9rem; opacity: 0; pointer-events: none; transition: all 0.3s; z-index: 9998; white-space: nowrap; max-width: 90vw; text-align: center; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Section sep */
+.section-sep { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, rgba(201,168,76,0.2), transparent); max-width: 1100px; margin: 0 auto; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--deep-blue); }
+::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 3px; }
+
+/* Lang */
+[data-en] { display: none; }
+body.lang-en [data-he] { display: none; }
+body.lang-en [data-en] { display: inline; }
+body.lang-en .timeline, body.lang-en .story-block { direction: ltr; }
+body.lang-en input, body.lang-en textarea { direction: ltr; }
+
+/* Info box */
+.info-box { background: rgba(74,127,165,0.08); border: 1px solid rgba(74,127,165,0.2); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-top: 1rem; font-size: 0.85rem; color: var(--sky-light); line-height: 1.8; }
+.info-box strong { color: var(--gold-light); }
+
+/* Drive connect panel */
+.drive-panel { background: rgba(255,255,255,0.03); border: 1px solid rgba(201,168,76,0.15); border-radius: var(--radius); padding: 1.5rem; text-align: center; }
+.drive-logo { font-size: 2.5rem; margin-bottom: 0.75rem; }
+.drive-title { font-family: 'Frank Ruhl Libre', serif; font-size: 1.1rem; color: var(--gold-light); margin-bottom: 0.5rem; }
+.drive-desc { font-size: 0.85rem; color: var(--sky-light); line-height: 1.7; margin-bottom: 1.25rem; }
+
+/* Responsive */
+@media (max-width: 640px) {
+  .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+  .form-row { grid-template-columns: 1fr; }
+  .nav-links a:not(.lang-toggle):not(.login-btn) { display: none; }
+  .admin-bar { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">✡ יואב אגמון</div>
+  <div class="nav-links">
+    <a href="#about" data-he>אודות</a><a href="#about" data-en>About</a>
+    <a href="#gallery" data-he>תמונות</a><a href="#gallery" data-en>Gallery</a>
+    <a href="#timeline" data-he>ציר זמן</a><a href="#timeline" data-en>Timeline</a>
+    <a href="#stories" data-he>סיפורים</a><a href="#stories" data-en>Stories</a>
+    <a href="#candles" data-he>נרות זיכרון</a><a href="#candles" data-en>Candles</a>
+    <a href="#comments" data-he>תגובות</a><a href="#comments" data-en>Comments</a>
+    <button class="lang-toggle" onclick="toggleLang()" id="langBtn">EN</button>
+    <button class="btn btn-outline login-btn" onclick="openLogin()" id="loginBtn" style="font-size:0.8rem;padding:0.35rem 0.9rem;">
+      <span data-he>כניסה</span><span data-en>Login</span>
+    </button>
+  </div>
+</nav>
+
+<!-- USER STATUS BAR -->
+<div class="user-status" id="statusBar">
+  <span id="statusText"></span>
+  <span id="driveStatusBadge"></span>
+  <button onclick="logout()" style="background:none;border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:0.75rem;padding:0.2rem 0.6rem;border-radius:10px;cursor:pointer;font-family:'Heebo',sans-serif;">
+    <span data-he>יציאה</span><span data-en>Logout</span>
+  </button>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-stars" id="starsContainer"></div>
+  <div class="hero-emblem">🌟</div>
+  <div class="hero-dates">
+    <span data-he>ב' בתשרי תשס"ו — י"א בתשרי תשפ"ה</span>
+    <span data-en>2005 — October 14, 2024</span>
+  </div>
+  <h1 class="hero-name">יואב אגמון</h1>
+  <p class="hero-name-en">Yoav Agmon</p>
+  <p class="hero-tagline">
+    <span data-he>לוחם גולני. חובש. בן. אח. חבר לכולם.<br><strong>נרות יהיו לו לנשמה ולזכרו לעולם</strong></span>
+    <span data-en>Golani fighter. Paramedic. Son. Brother. Friend to everyone.<br><strong>May his memory be an eternal blessing</strong></span>
+  </p>
+  <div class="hero-scroll"><div class="scroll-arrow"></div></div>
+</section>
+
+<!-- ABOUT -->
+<div class="section-sep"></div>
+<section class="section" id="about">
+  <h2 class="section-title"><span data-he>מי היה יואב</span><span data-en>Who Was Yoav</span></h2>
+  <div class="divider"></div>
+  <div class="about-grid">
+    <div class="about-card"><span class="card-icon">🏊</span><div class="card-title"><span data-he>ספורטאי ושחיין</span><span data-en>Swimmer & Athlete</span></div><div class="card-text"><span data-he>יואב אהב לשחות ולהיות פעיל. המים היו בשבילו מקום של חופש ושמחה</span><span data-en>Yoav loved to swim and stay active. The water was his place of freedom and joy</span></div></div>
+    <div class="about-card"><span class="card-icon">🚑</span><div class="card-title"><span data-he>חובש גולני</span><span data-en>Golani Paramedic</span></div><div class="card-text"><span data-he>למד בכל כוחו כי ידע שחייהם של חבריו בידיו. בגיל 19 כבר היה אחראי על חייהם של אחרים</span><span data-en>He studied with all his might knowing his friends' lives depended on him. At 19, already responsible for others' lives</span></div></div>
+    <div class="about-card"><span class="card-icon">🦸</span><div class="card-title"><span data-he>גיבור-על מהלב</span><span data-en>Superhero at Heart</span></div><div class="card-text"><span data-he>מאז שהיה ילד קטן הוא אהב גיבורי-על — ובמיוחד את באז לייטייר מ"צעצוע של סיפור"</span><span data-en>Since childhood he loved superheroes — especially Buzz Lightyear. He lived "to infinity and beyond"</span></div></div>
+    <div class="about-card"><span class="card-icon">❤️</span><div class="card-title"><span data-he>חבר של כולם</span><span data-en>Everyone's Friend</span></div><div class="card-text"><span data-he>לא היה אדם שלא אהב את יואב. הוא ידע לחייך לכולם, להיות שם לכולם</span><span data-en>There was no one who didn't love Yoav. He could smile at everyone, be there for everyone</span></div></div>
+    <div class="about-card"><span class="card-icon">📚</span><div class="card-title"><span data-he>לוחם על הלמידה</span><span data-en>Learning Warrior</span></div><div class="card-text"><span data-he>למרות דיסלקציה ו-ADHD, יואב סיים בהצלחה את לימודיו. הוא הוכיח שעם רצון, אפשר הכל</span><span data-en>Despite dyslexia and ADHD, Yoav successfully graduated. He proved that with determination, anything is possible</span></div></div>
+    <div class="about-card"><span class="card-icon">👨‍👩‍👦</span><div class="card-title"><span data-he>ילד אהוב</span><span data-en>Beloved Son</span></div><div class="card-text"><span data-he>השאיר מאחוריו את אמו לילך, אביו צפריר ושלושה אחים ואחיות. כולם נשברי לב</span><span data-en>He left behind his mother Lilach, father Tzafrir, and three siblings — all with broken hearts</span></div></div>
+  </div>
+  <div class="buzz-tribute">
+    <div class="buzz-quote">"To infinity and beyond"</div>
+    <div class="buzz-attribution"><span data-he>באז לייטייר — גיבור-העל של יואב מאז ילדות. כמוהו, גם יואב טס הכי גבוה שאפשר</span><span data-en>Buzz Lightyear — Yoav's childhood hero. Like Buzz, Yoav flew as high as anyone ever could</span></div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<div class="section-sep"></div>
+<section class="section" id="gallery">
+  <h2 class="section-title"><span data-he>גלריית תמונות</span><span data-en>Photo Gallery</span></h2>
+  <p class="section-subtitle"><span data-he>רגעים שנצרבו לתמיד בלבבות</span><span data-en>Moments forever burned into our hearts</span></p>
+  <div class="divider"></div>
+
+  <div class="gallery-grid" id="galleryGrid">
+    <div class="gallery-item upload-slot" onclick="adminUploadClick('photo')">
+      <div class="gallery-placeholder"><div class="icon">📷</div><div class="label"><span data-he>הוסף תמונה</span><span data-en>Add Photo</span></div></div>
+    </div>
+    <div class="gallery-item upload-slot" onclick="adminUploadClick('photo')">
+      <div class="gallery-placeholder"><div class="icon">🖼️</div><div class="label"><span data-he>תמונה</span><span data-en>Photo</span></div></div>
+    </div>
+    <div class="gallery-item upload-slot" onclick="adminUploadClick('photo')">
+      <div class="gallery-placeholder"><div class="icon">📷</div><div class="label"><span data-he>הוסף תמונה</span><span data-en>Add Photo</span></div></div>
+    </div>
+    <div class="gallery-item upload-slot" onclick="adminUploadClick('photo')">
+      <div class="gallery-placeholder"><div class="icon">🖼️</div><div class="label"><span data-he>תמונה</span><span data-en>Photo</span></div></div>
+    </div>
+    <div class="gallery-item upload-slot" onclick="adminUploadClick('photo')">
+      <div class="gallery-placeholder"><div class="icon">📷</div><div class="label"><span data-he>הוסף תמונה</span><span data-en>Add Photo</span></div></div>
+    </div>
+    <div class="gallery-item upload-slot" onclick="adminUploadClick('photo')">
+      <div class="gallery-placeholder"><div class="icon">🌟</div><div class="label"><span data-he>יואב שלנו</span><span data-en>Our Yoav</span></div></div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:2rem;" class="admin-only" style="display:none;">
+    <button class="btn btn-outline" onclick="openUploadModal('photo')">
+      <span data-he>📷 העלה תמונה חדשה</span><span data-en>📷 Upload New Photo</span>
+    </button>
+  </div>
+</section>
+
+<!-- VIDEOS -->
+<div class="section-sep"></div>
+<section class="section" id="videos">
+  <h2 class="section-title"><span data-he>סרטוני זיכרון</span><span data-en>Memorial Videos</span></h2>
+  <p class="section-subtitle"><span data-he>לשמוע את קולו, לראות את חיוכו</span><span data-en>To hear his voice, to see his smile</span></p>
+  <div class="divider"></div>
+  <div class="video-grid" id="videoGrid">
+    <div class="video-card">
+      <div class="video-thumb" onclick="showToast(lang==='he'?'קישור לסרטון טרם הוגדר':'Video link not yet set')">
+        <div class="play-btn"><div class="play-icon"></div></div>
+      </div>
+      <div class="video-info"><div class="video-title"><span data-he>הטקס הרשמי</span><span data-en>Official Ceremony</span></div><div class="video-meta"><span data-he>לחץ להוסיף קישור</span><span data-en>Click to add link</span></div></div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:2rem;" class="admin-only" style="display:none;">
+    <button class="btn btn-outline" onclick="openUploadModal('video')">
+      <span data-he>🎬 הוסף סרטון</span><span data-en>🎬 Add Video</span>
+    </button>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<div class="section-sep"></div>
+<section class="section" id="timeline">
+  <h2 class="section-title"><span data-he>ציר החיים</span><span data-en>Life Timeline</span></h2>
+  <p class="section-subtitle"><span data-he>רגעים שעיצבו את יואב</span><span data-en>Moments that shaped Yoav</span></p>
+  <div class="divider"></div>
+  <div class="timeline" id="timelineEl">
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-year">2005</div>
+      <div class="timeline-title"><span data-he>נולד יואב אגמון</span><span data-en>Yoav Agmon is born</span></div>
+      <div class="timeline-desc"><span data-he>ב' בתשרי תשס"ו — אור חדש בא לעולם</span><span data-en>A new light came into the world</span></div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-year">2023</div>
+      <div class="timeline-title"><span data-he>גיוס לגולני</span><span data-en>Drafted to Golani Brigade</span></div>
+      <div class="timeline-desc"><span data-he>יואב בחר לשרת כחובש — להציל חיים</span><span data-en>Yoav chose to serve as a paramedic — to save lives</span></div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-year" style="color:var(--sky-light);">14 אוקטובר 2024</div>
+      <div class="timeline-title"><span data-he>נפל בקרב</span><span data-en>Fell in Battle</span></div>
+      <div class="timeline-desc"><span data-he>י"א בתשרי תשפ"ה — עלה לגנזי מרומים. זכרונו לברכה</span><span data-en>He ascended to the highest realms. May his memory be a blessing</span></div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:2rem;" class="admin-only" style="display:none;">
+    <button class="btn btn-outline" onclick="addTimelineItem()">
+      <span data-he>📅 הוסף אירוע</span><span data-en>📅 Add Event</span>
+    </button>
+  </div>
+</section>
+
+<!-- STORIES -->
+<div class="section-sep"></div>
+<section class="section" id="stories">
+  <h2 class="section-title"><span data-he>סיפורים ממי שאהבו אותו</span><span data-en>Stories from Those Who Loved Him</span></h2>
+  <p class="section-subtitle"><span data-he>כי כל זיכרון הוא אנדרטה חיה</span><span data-en>Because every memory is a living monument</span></p>
+  <div class="divider"></div>
+  <div id="storiesContainer">
+    <div class="story-block">
+      <div class="quote-mark">"</div>
+      <p class="story-text" data-he>יואב שלי, הילד שלי. אתה לא נעלמת — אתה בכל מקום. בכל גל בבריכה, בכל כוכב בשמיים, בכל חיוך של ילד. אני אוהבת אותך עד אינסוף ומעבר לו.</p>
+      <p class="story-text" data-en style="display:none;">My Yoav, my child. You haven't disappeared — you're everywhere. In every wave in the pool, in every star in the sky, in every child's smile. I love you to infinity and beyond.</p>
+      <div style="margin-top:1rem;font-size:0.85rem;color:var(--gold);font-weight:500;">— <span data-he>לילך אגמון (אמא)</span><span data-en>Lilach Agmon (Mom)</span></div>
+    </div>
+  </div>
+  <div class="admin-only" style="display:none;margin-top:2rem;">
+    <div id="addStoryForm" style="background:rgba(255,255,255,0.03);border:1px solid rgba(201,168,76,0.2);border-radius:var(--radius);padding:2rem;">
+      <div class="form-title"><span data-he>הוסף סיפור</span><span data-en>Add Story</span></div>
+      <div class="form-group" style="margin-bottom:1rem;">
+        <label><span data-he>שם הכותב</span><span data-en>Author Name</span></label>
+        <input id="storyAuthor" type="text" placeholder="שם...">
+      </div>
+      <div class="form-group" style="margin-bottom:1rem;">
+        <label><span data-he>הסיפור / הזיכרון</span><span data-en>The story / memory</span></label>
+        <textarea id="storyText" placeholder="שתף זיכרון יקר..."></textarea>
+      </div>
+      <button class="btn btn-gold" onclick="addStory()"><span data-he>פרסם סיפור</span><span data-en>Publish Story</span></button>
+    </div>
+  </div>
+</section>
+
+<!-- CANDLES -->
+<div class="section-sep"></div>
+<section class="section" id="candles">
+  <h2 class="section-title"><span data-he>נרות זיכרון</span><span data-en>Memorial Candles</span></h2>
+  <p class="section-subtitle"><span data-he>כל נר — לב שזוכר</span><span data-en>Every candle — a heart that remembers</span></p>
+  <div class="divider"></div>
+  <div class="candle-section">
+    <div class="candle-count" id="candleCount">4</div>
+    <div class="candle-label"><span data-he>נרות הודלקו לזכרו</span><span data-en>candles lit in his memory</span></div>
+    <div class="candles-row" id="candlesRow"></div>
+    <div style="display:flex;gap:1rem;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:1rem;">
+      <input id="candleName" type="text" placeholder="שמך..." style="max-width:220px;text-align:center;">
+      <button class="btn btn-gold" onclick="lightCandle()">🕯️ <span data-he>הדלק נר</span><span data-en>Light a Candle</span></button>
+    </div>
+  </div>
+</section>
+
+<!-- COMMENTS -->
+<div class="section-sep"></div>
+<section class="section" id="comments">
+  <h2 class="section-title"><span data-he>מסרים ותגובות</span><span data-en>Messages & Tributes</span></h2>
+  <p class="section-subtitle"><span data-he>כתבו לו, כתבו עליו, שתפו</span><span data-en>Write to him, write about him, share</span></p>
+  <div class="divider"></div>
+  <div id="commentsContainer">
+    <div class="comment-box">
+      <div class="comment-header">
+        <div class="avatar" style="background:rgba(201,168,76,0.15);color:var(--gold);">ל</div>
+        <div class="comment-meta">
+          <div class="comment-author"><span data-he>לילך אגמון (אמא)</span><span data-en>Lilach Agmon (Mom)</span></div>
+          <div class="comment-date">14 אוקטובר 2024</div>
+        </div>
+      </div>
+      <div class="comment-text"><span data-he>יואב שלי, הילד שלי. אתה לא נעלמת — אתה בכל מקום. זכרונך לברכה לעד.</span><span data-en>My Yoav, my child. You haven't disappeared — you're everywhere. May your memory be an eternal blessing.</span></div>
+    </div>
+  </div>
+  <div class="comment-form">
+    <div class="form-title"><span data-he>השאר מסר</span><span data-en>Leave a Message</span></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label><span data-he>שמך</span><span data-en>Your Name</span></label>
+        <input id="commentName" type="text" placeholder="שם...">
+      </div>
+      <div class="form-group">
+        <label><span data-he>קשר ליואב</span><span data-en>Relation to Yoav</span></label>
+        <input id="commentRelation" type="text" placeholder="חבר, מכר...">
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label><span data-he>המסר שלך</span><span data-en>Your Message</span></label>
+      <textarea id="commentText" placeholder="כתוב מסר לזכרו של יואב..."></textarea>
+    </div>
+    <button class="btn btn-gold" onclick="submitComment()"><span data-he>שלח מסר</span><span data-en>Send Message</span></button>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-text"><span data-he>זכרונו יהיה ברכה לעולם ועד</span><span data-en>May his memory be an eternal blessing</span></div>
+  <div class="footer-sub">
+    יואב אגמון • Yoav Agmon • 2005 – 2024<br>
+    <span data-he>לוחם גולני, חובש, בן, אח — לנצח בלבבות</span>
+    <span data-en>Golani fighter, paramedic, son, brother — forever in our hearts</span>
+  </div>
+</footer>
+
+<!-- ═══════════ MODALS ═══════════ -->
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('loginModal')">×</button>
+    <div class="modal-title">🔑 <span data-he>כניסת מנהלים</span><span data-en>Admin Login</span></div>
+    <div class="modal-subtitle"><span data-he>כניסה מוגבלת למנהלי האתר בלבד</span><span data-en>Access restricted to site administrators only</span></div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label><span data-he>שם משתמש</span><span data-en>Username</span></label>
+      <input id="loginUser" type="text" placeholder="username" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="form-group" style="margin-bottom:1.5rem;">
+      <label><span data-he>סיסמה</span><span data-en>Password</span></label>
+      <input id="loginPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-gold" style="width:100%;" onclick="doLogin()">
+      <span data-he>כניסה</span><span data-en>Login</span>
+    </button>
+    <div class="info-box" style="margin-top:1.25rem;">
+      <span data-he><strong>מנהלים:</strong> שנה את פרטי הכניסה בקוד לפני הפרסום</span>
+      <span data-en><strong>Admins:</strong> Change login credentials in the code before publishing</span>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal upload-modal">
+    <button class="modal-close" onclick="closeModal('uploadModal')">×</button>
+    <div class="modal-title" id="uploadModalTitle">📁 <span data-he>העלאת תוכן</span><span data-en>Upload Content</span></div>
+    <div class="modal-subtitle" id="uploadModalSub"><span data-he>העלה תמונות, סרטונים וסיפורים</span><span data-en>Upload photos, videos and stories</span></div>
+
+    <div class="tab-bar" id="uploadTabs">
+      <button class="tab-btn active" onclick="switchTab('url')"><span data-he>🔗 קישור URL</span><span data-en>🔗 URL Link</span></button>
+      <button class="tab-btn" onclick="switchTab('drive')"><span data-he>☁️ Google Drive</span><span data-en>☁️ Google Drive</span></button>
+      <button class="tab-btn" onclick="switchTab('file')"><span data-he>📁 קובץ מקומי</span><span data-en>📁 Local File</span></button>
+    </div>
+
+    <!-- URL Tab -->
+    <div class="tab-panel active" id="tab-url">
+      <div class="form-group" style="margin-bottom:1rem;">
+        <label><span data-he>כתובת URL של התמונה/סרטון</span><span data-en>Photo/Video URL</span></label>
+        <input id="urlInput" type="url" placeholder="https://...">
+      </div>
+      <div class="form-group" style="margin-bottom:1rem;" id="videoTitleGroup">
+        <label><span data-he>כותרת</span><span data-en>Title</span></label>
+        <input id="urlTitle" type="text" placeholder="כותרת...">
+      </div>
+      <button class="btn btn-gold" onclick="submitUrl()"><span data-he>הוסף</span><span data-en>Add</span></button>
+    </div>
+
+    <!-- Drive Tab -->
+    <div class="tab-panel" id="tab-drive">
+      <div id="driveNotConnected">
+        <div class="drive-panel">
+          <div class="drive-logo">☁️</div>
+          <div class="drive-title"><span data-he>Google Drive</span><span data-en>Google Drive</span></div>
+          <div class="drive-desc">
+            <span data-he>העלה ואחסן תמונות וסרטונים ב-Google Drive שלך בחינם.<br><strong>לחץ על "חיבור Drive"</strong> להזנת מפתח ה-API שלך.</span>
+            <span data-en>Upload and store photos & videos in your Google Drive for free.<br><strong>Click "Connect Drive"</strong> to enter your API key.</span>
+          </div>
+          <button class="btn btn-gold" onclick="openDriveSetup()"><span data-he>⚙️ הגדר Google Drive</span><span data-en>⚙️ Setup Google Drive</span></button>
+        </div>
+        <div class="info-box">
+          <span data-he>
+            <strong>📌 איך זה עובד:</strong><br>
+            1. צור פרויקט ב-Google Cloud Console<br>
+            2. הפעל את Drive API<br>
+            3. צור API key (מוגבל לאתר זה)<br>
+            4. הכנס את ה-API key וה-Folder ID כאן<br>
+            <a href="javascript:void(0)" onclick="openDriveGuide()" style="color:var(--gold);">פתח מדריך מלא »</a>
+          </span>
+          <span data-en>
+            <strong>📌 How it works:</strong><br>
+            1. Create a project in Google Cloud Console<br>
+            2. Enable Drive API<br>
+            3. Create an API key (restricted to this site)<br>
+            4. Enter the API key and Folder ID here<br>
+            <a href="javascript:void(0)" onclick="openDriveGuide()" style="color:var(--gold);">Open full guide »</a>
+          </span>
+        </div>
+      </div>
+
+      <div id="driveConnected" style="display:none;">
+        <div class="upload-area" id="driveUploadArea">
+          <input type="file" id="driveFileInput" accept="image/*,video/*" onchange="handleDriveUpload(this.files)">
+          <div class="upload-icon">☁️</div>
+          <div class="upload-text">
+            <strong><span data-he>גרור קובץ לכאן</span><span data-en>Drag file here</span></strong><br>
+            <span data-he>או לחץ לבחירת קובץ • תמונות וסרטונים</span><span data-en>or click to choose file • Images and Videos</span>
+          </div>
+          <div class="upload-progress" id="driveProgress"><div class="upload-progress-bar" id="driveProgressBar" style="width:0%"></div></div>
+        </div>
+        <div style="margin-top:1rem;font-size:0.8rem;color:var(--sky-light);text-align:center;" id="driveInfo"></div>
+      </div>
+    </div>
+
+    <!-- Local File Tab -->
+    <div class="tab-panel" id="tab-file">
+      <div class="upload-area">
+        <input type="file" id="localFileInput" accept="image/*,video/*" onchange="handleLocalFile(this.files)">
+        <div class="upload-icon">📁</div>
+        <div class="upload-text">
+          <strong><span data-he>גרור קובץ לכאן</span><span data-en>Drag file here</span></strong><br>
+          <span data-he>או לחץ לבחירת קובץ מהמחשב</span><span data-en>or click to choose from your computer</span>
+        </div>
+      </div>
+      <div class="info-box" style="margin-top:1rem;">
+        <span data-he>⚠️ <strong>שימו לב:</strong> קבצים מקומיים אינם נשמרים בין רענונים. לאחסון קבוע, השתמש ב-Google Drive.</span>
+        <span data-en>⚠️ <strong>Note:</strong> Local files are not saved between refreshes. For permanent storage, use Google Drive.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DRIVE SETUP MODAL -->
+<div class="modal-overlay" id="driveSetupModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('driveSetupModal')">×</button>
+    <div class="modal-title">☁️ <span data-he>הגדרת Google Drive</span><span data-en>Google Drive Setup</span></div>
+    <div class="modal-subtitle"><span data-he>הגדר פעם אחת — ואחסן לנצח</span><span data-en>Set up once — store forever</span></div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label><span data-he>Google API Key</span><span data-en>Google API Key</span></label>
+      <input id="driveApiKey" type="text" placeholder="AIzaSy..." value="">
+    </div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label><span data-he>Drive Folder ID (לתמונות יואב)</span><span data-en>Drive Folder ID (for Yoav's photos)</span></label>
+      <input id="driveFolderId" type="text" placeholder="1BxiM...">
+    </div>
+    <div class="form-group" style="margin-bottom:1.5rem;">
+      <label><span data-he>Client ID (OAuth)</span><span data-en>Client ID (OAuth)</span></label>
+      <input id="driveClientId" type="text" placeholder="123456...apps.googleusercontent.com">
+    </div>
+    <button class="btn btn-gold" style="width:100%;margin-bottom:0.75rem;" onclick="saveDriveConfig()">
+      <span data-he>שמור ובדוק חיבור</span><span data-en>Save & Test Connection</span>
+    </button>
+    <div class="info-box">
+      <span data-he>
+        <strong>📋 הוראות מהירות:</strong><br>
+        1. לך ל-<a href="https://console.cloud.google.com" target="_blank" style="color:var(--gold);">console.cloud.google.com</a><br>
+        2. צור פרויקט חדש → הפעל "Google Drive API"<br>
+        3. "Credentials" → "Create API Key" → הגבל לדומיין שלך<br>
+        4. צור OAuth Client ID (type: Web application)<br>
+        5. צור תיקיה ב-Drive → העתק את ה-ID מה-URL<br>
+        <br>
+        <a href="javascript:void(0)" onclick="openDriveGuide()" style="color:var(--gold);">📖 מדריך מלא עם צילומי מסך »</a>
+      </span>
+      <span data-en>
+        <strong>📋 Quick Steps:</strong><br>
+        1. Go to <a href="https://console.cloud.google.com" target="_blank" style="color:var(--gold);">console.cloud.google.com</a><br>
+        2. New project → Enable "Google Drive API"<br>
+        3. "Credentials" → "Create API Key" → Restrict to your domain<br>
+        4. Create OAuth Client ID (type: Web application)<br>
+        5. Create Drive folder → Copy ID from URL<br>
+        <br>
+        <a href="javascript:void(0)" onclick="openDriveGuide()" style="color:var(--gold);">📖 Full guide with screenshots »</a>
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- DRIVE GUIDE MODAL -->
+<div class="modal-overlay" id="driveGuideModal">
+  <div class="modal" style="max-width:620px;max-height:85vh;overflow-y:auto;">
+    <button class="modal-close" onclick="closeModal('driveGuideModal')">×</button>
+    <div class="modal-title">📖 <span data-he>מדריך Google Drive</span><span data-en>Google Drive Guide</span></div>
+    <div style="font-size:0.88rem;color:var(--sky-light);line-height:2;margin-top:1rem;">
+      <div style="color:var(--gold);font-weight:700;margin-bottom:0.5rem;font-size:1rem;" data-he>שלב 1: יצירת פרויקט Google Cloud</div>
+      <div style="color:var(--gold);font-weight:700;margin-bottom:0.5rem;font-size:1rem;" data-en>Step 1: Create Google Cloud Project</div>
+      <ol style="padding-right:1.5rem;direction:rtl;" data-he>
+        <li>פתח <a href="https://console.cloud.google.com" target="_blank" style="color:var(--gold-light);">console.cloud.google.com</a></li>
+        <li>לחץ "New Project" → תן שם (לדוגמה: "yoav-memorial")</li>
+        <li>ב"APIs & Services" → "Library" → חפש "Google Drive API" → Enable</li>
+      </ol>
+      <ol style="padding-left:1.5rem;direction:ltr;" data-en>
+        <li>Open <a href="https://console.cloud.google.com" target="_blank" style="color:var(--gold-light);">console.cloud.google.com</a></li>
+        <li>Click "New Project" → Name it (e.g., "yoav-memorial")</li>
+        <li>In "APIs & Services" → "Library" → search "Google Drive API" → Enable</li>
+      </ol>
+
+      <div style="color:var(--gold);font-weight:700;margin:1.25rem 0 0.5rem;font-size:1rem;" data-he>שלב 2: יצירת API Key</div>
+      <div style="color:var(--gold);font-weight:700;margin:1.25rem 0 0.5rem;font-size:1rem;" data-en>Step 2: Create API Key</div>
+      <ol style="padding-right:1.5rem;direction:rtl;" data-he>
+        <li>"APIs & Services" → "Credentials" → "+ Create Credentials" → "API key"</li>
+        <li>לחץ "Restrict Key" → תחת "API restrictions" בחר "Google Drive API"</li>
+        <li>תחת "Website restrictions" הוסף את כתובת האתר שלך</li>
+        <li>העתק את ה-API key</li>
+      </ol>
+      <ol style="padding-left:1.5rem;direction:ltr;" data-en>
+        <li>"APIs & Services" → "Credentials" → "+ Create Credentials" → "API key"</li>
+        <li>Click "Restrict Key" → Under "API restrictions" select "Google Drive API"</li>
+        <li>Under "Website restrictions" add your site's URL</li>
+        <li>Copy the API key</li>
+      </ol>
+
+      <div style="color:var(--gold);font-weight:700;margin:1.25rem 0 0.5rem;font-size:1rem;" data-he>שלב 3: יצירת OAuth Client ID</div>
+      <div style="color:var(--gold);font-weight:700;margin:1.25rem 0 0.5rem;font-size:1rem;" data-en>Step 3: Create OAuth Client ID</div>
+      <ol style="padding-right:1.5rem;direction:rtl;" data-he>
+        <li>ב-Credentials → "Create Credentials" → "OAuth client ID"</li>
+        <li>Application type: "Web application"</li>
+        <li>Authorized JavaScript origins: כתובת האתר שלך</li>
+        <li>העתק את ה-Client ID</li>
+      </ol>
+      <ol style="padding-left:1.5rem;direction:ltr;" data-en>
+        <li>In Credentials → "Create Credentials" → "OAuth client ID"</li>
+        <li>Application type: "Web application"</li>
+        <li>Authorized JavaScript origins: your site's URL</li>
+        <li>Copy the Client ID</li>
+      </ol>
+
+      <div style="color:var(--gold);font-weight:700;margin:1.25rem 0 0.5rem;font-size:1rem;" data-he>שלב 4: יצירת תיקיית Drive</div>
+      <div style="color:var(--gold);font-weight:700;margin:1.25rem 0 0.5rem;font-size:1rem;" data-en>Step 4: Create Drive Folder</div>
+      <ol style="padding-right:1.5rem;direction:rtl;" data-he>
+        <li>פתח <a href="https://drive.google.com" target="_blank" style="color:var(--gold-light);">drive.google.com</a></li>
+        <li>צור תיקיה חדשה בשם "Yoav Memorial"</li>
+        <li>לחץ ימין → "Share" → הפוך ל-"Anyone with the link can view"</li>
+        <li>מה-URL העתק את ה-Folder ID (החלק אחרי /folders/)</li>
+      </ol>
+      <ol style="padding-left:1.5rem;direction:ltr;" data-en>
+        <li>Open <a href="https://drive.google.com" target="_blank" style="color:var(--gold-light);">drive.google.com</a></li>
+        <li>Create new folder named "Yoav Memorial"</li>
+        <li>Right-click → "Share" → set to "Anyone with the link can view"</li>
+        <li>From the URL copy the Folder ID (part after /folders/)</li>
+      </ol>
+
+      <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:1rem;margin-top:1rem;">
+        <strong style="color:var(--gold);" data-he>💡 אפשרות חינמית מלאה:</strong>
+        <strong style="color:var(--gold);" data-en>💡 100% Free Option:</strong>
+        <p style="margin-top:0.5rem;" data-he>Google Drive נותן 15GB בחינם. זה מספיק לאלפי תמונות וסרטונים. לא צריך לשלם כלום.</p>
+        <p style="margin-top:0.5rem;" data-en>Google Drive gives 15GB free. That's enough for thousands of photos and videos. No cost needed.</p>
+      </div>
+
+      <div style="background:rgba(74,127,165,0.08);border:1px solid rgba(74,127,165,0.2);border-radius:8px;padding:1rem;margin-top:1rem;">
+        <strong style="color:var(--sky-light);" data-he>🌐 אפשרויות אחסון לאתר:</strong>
+        <strong style="color:var(--sky-light);" data-en>🌐 Hosting Options:</strong>
+        <p style="margin-top:0.5rem;" data-he><strong style="color:var(--white);">GitHub Pages</strong> — חינם לחלוטין, קל מאוד להגדרה<br><strong style="color:var(--white);">Netlify</strong> — חינם, drag-and-drop לפרסום<br><strong style="color:var(--white);">Vercel</strong> — חינם, מהיר מאוד</p>
+        <p style="margin-top:0.5rem;" data-en><strong style="color:var(--white);">GitHub Pages</strong> — completely free, very easy to setup<br><strong style="color:var(--white);">Netlify</strong> — free, drag-and-drop to publish<br><strong style="color:var(--white);">Vercel</strong> — free, very fast</p>
+      </div>
+    </div>
+    <button class="btn btn-outline" style="width:100%;margin-top:1.5rem;" onclick="closeModal('driveGuideModal')">
+      <span data-he>סגור</span><span data-en>Close</span>
+    </button>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close">×</button>
+  <img id="lightboxImg" src="" alt="">
+  <div class="lightbox-caption" id="lightboxCaption"></div>
+</div>
+
+<!-- ADMIN BAR -->
+<div class="admin-bar" id="adminBar">
+  <button class="btn btn-gold" onclick="openUploadModal('photo')">📷 <span data-he>תמונה</span><span data-en>Photo</span></button>
+  <button class="btn btn-sky" onclick="openUploadModal('video')">🎬 <span data-he>סרטון</span><span data-en>Video</span></button>
+  <button class="btn btn-outline" onclick="document.querySelectorAll('.admin-only').forEach(el=>el.style.display=el.style.display==='none'?'block':'none')">⚙️ <span data-he>כלי עריכה</span><span data-en>Edit Tools</span></button>
+  <div class="admin-bar-label" id="adminBarLabel"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════
+// CONFIGURATION — CHANGE BEFORE PUBLISHING
+// ══════════════════════════════════
+const USERS = {
+  'admin': {
+    pass: 'admin123',      // ← CHANGE THIS PASSWORD
+    role: 'admin',
+    name: 'מנהל'           // ← CHANGE TO YOUR NAME (e.g., "Tzafrir")
+  },
+  'lilach': {
+    pass: 'lilach123',     // ← CHANGE THIS PASSWORD
+    role: 'admin',
+    name: 'לילך (אמא)'    // ← Lilach's account
+  }
+};
+
+let driveConfig = {
+  apiKey: localStorage.getItem('driveApiKey') || '',
+  folderId: localStorage.getItem('driveFolderId') || '',
+  clientId: localStorage.getItem('driveClientId') || ''
+};
+
+// ══════════════════════════════════
+// STATE
+// ══════════════════════════════════
+let currentUser = null;
+let lang = 'he';
+let candles = [];
+let currentUploadType = 'photo';
+let activeTab = 'url';
+
+const avatarColors = ['rgba(201,168,76,0.15)','rgba(74,127,165,0.15)','rgba(100,180,120,0.15)','rgba(180,100,100,0.15)'];
+const avatarTextColors = ['var(--gold)','var(--sky-light)','#7EC8A4','#C88080'];
+
+// ══════════════════════════════════
+// STARS
+// ══════════════════════════════════
+(function createStars() {
+  const c = document.getElementById('starsContainer');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--delay:${Math.random()*3}s;opacity:${0.1+Math.random()*0.6};width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;`;
+    c.appendChild(s);
+  }
+})();
+
+// ══════════════════════════════════
+// LANG
+// ══════════════════════════════════
+function toggleLang() {
+  lang = lang === 'he' ? 'en' : 'he';
+  document.body.classList.toggle('lang-en', lang === 'en');
+  document.getElementById('langBtn').textContent = lang === 'he' ? 'EN' : 'עב';
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
+}
+
+// ══════════════════════════════════
+// AUTH
+// ══════════════════════════════════
+function openLogin() { document.getElementById('loginModal').classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim().toLowerCase();
+  const p = document.getElementById('loginPass').value;
+  const found = USERS[u];
+  if (!found || found.pass !== p) {
+    showToast(lang==='he' ? 'שם משתמש או סיסמה שגויים' : 'Invalid credentials');
+    return;
+  }
+  currentUser = { username: u, role: found.role, name: found.name };
+  closeModal('loginModal');
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  applyAuth();
+  showToast(`ברוך הבא, ${found.name}! 👋`);
+}
+
+function logout() {
+  currentUser = null;
+  document.getElementById('statusBar').classList.remove('visible');
+  document.getElementById('adminBar').classList.remove('visible');
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+  document.getElementById('loginBtn').style.display = '';
+  showToast(lang==='he' ? 'התנתקת בהצלחה' : 'Logged out successfully');
+}
+
+function applyAuth() {
+  if (!currentUser) return;
+  const bar = document.getElementById('statusBar');
+  bar.classList.add('visible');
+  document.getElementById('statusText').textContent = (lang==='he' ? 'מחובר: ' : 'Logged in: ') + currentUser.name + ' 🔑';
+  document.getElementById('loginBtn').style.display = 'none';
+  updateDriveStatusBadge();
+
+  if (currentUser.role === 'admin') {
+    document.getElementById('adminBar').classList.add('visible');
+    document.getElementById('adminBarLabel').textContent = currentUser.name;
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+  }
+}
+
+// ══════════════════════════════════
+// CANDLES
+// ══════════════════════════════════
+function lightCandle() {
+  const name = document.getElementById('candleName').value.trim() || (lang==='he' ? 'אנונימי' : 'Anonymous');
+  candles.push(name);
+  renderCandles();
+  document.getElementById('candleName').value = '';
+  showToast(lang==='he' ? '🕯️ הנר הודלק — יואב יזכר תמיד' : '🕯️ Candle lit — Yoav will always be remembered');
+}
+
+function renderCandles() {
+  document.getElementById('candleCount').textContent = candles.length;
+  const row = document.getElementById('candlesRow');
+  row.innerHTML = '';
+  candles.slice(-15).forEach(name => {
+    const c = document.createElement('div');
+    c.className = 'candle';
+    c.style = `--f:${1.2+Math.random()*0.8}s;--fd:${Math.random()}s`;
+    c.innerHTML = `<div class="candle-flame"></div><div class="candle-body"></div><div class="candle-name">${name}</div>`;
+    row.appendChild(c);
+  });
+}
+
+// ══════════════════════════════════
+// COMMENTS
+// ══════════════════════════════════
+function submitComment() {
+  const name = document.getElementById('commentName').value.trim();
+  const relation = document.getElementById('commentRelation').value.trim();
+  const text = document.getElementById('commentText').value.trim();
+  if (!name || !text) { showToast(lang==='he' ? 'אנא מלא שם ומסר' : 'Please fill in name and message'); return; }
+
+  const container = document.getElementById('commentsContainer');
+  const idx = Math.floor(Math.random()*4);
+  const initial = name.charAt(0);
+  const dateStr = new Date().toLocaleDateString('he-IL');
+
+  const box = document.createElement('div');
+  box.className = 'comment-box';
+  box.style.animation = 'modal-in 0.3s ease';
+  box.innerHTML = `
+    <div class="comment-header">
+      <div class="avatar" style="background:${avatarColors[idx]};color:${avatarTextColors[idx]};">${initial}</div>
+      <div class="comment-meta">
+        <div class="comment-author">${name}${relation ? ' ('+relation+')' : ''}</div>
+        <div class="comment-date">${dateStr}</div>
+      </div>
+      ${currentUser?.role==='admin' ? `<button class="btn btn-danger" onclick="this.closest('.comment-box').remove()">🗑</button>` : ''}
+    </div>
+    <div class="comment-text">${text}</div>
+  `;
+  container.appendChild(box);
+  document.getElementById('commentName').value = '';
+  document.getElementById('commentRelation').value = '';
+  document.getElementById('commentText').value = '';
+  showToast(lang==='he' ? '💙 המסר נשמר — תודה שזכרת את יואב' : '💙 Message saved — thank you for remembering Yoav');
+}
+
+// ══════════════════════════════════
+// STORIES
+// ══════════════════════════════════
+function addStory() {
+  const author = document.getElementById('storyAuthor').value.trim();
+  const text = document.getElementById('storyText').value.trim();
+  if (!text) return;
+  const container = document.getElementById('storiesContainer');
+  const block = document.createElement('div');
+  block.className = 'story-block';
+  block.style.animation = 'modal-in 0.3s ease';
+  block.innerHTML = `
+    <div class="quote-mark">"</div>
+    <p class="story-text">${text}</p>
+    ${author ? `<div style="margin-top:1rem;font-size:0.85rem;color:var(--gold);font-weight:500;">— ${author}</div>` : ''}
+    <button class="btn btn-danger" style="margin-top:0.5rem;" onclick="this.closest('.story-block').remove()">🗑 מחק</button>
+  `;
+  container.appendChild(block);
+  document.getElementById('storyAuthor').value = '';
+  document.getElementById('storyText').value = '';
+  showToast(lang==='he' ? '✨ הסיפור פורסם' : '✨ Story published');
+}
+
+// ══════════════════════════════════
+// TIMELINE
+// ══════════════════════════════════
+function addTimelineItem() {
+  const year = prompt(lang==='he' ? 'שנה / תקופה:' : 'Year / Period:') || '2024';
+  const title = prompt(lang==='he' ? 'כותרת האירוע:' : 'Event title:') || '';
+  const desc = prompt(lang==='he' ? 'תיאור:' : 'Description:') || '';
+  if (!title) return;
+  const tl = document.getElementById('timelineEl');
+  const item = document.createElement('div');
+  item.className = 'timeline-item';
+  item.innerHTML = `
+    <div class="timeline-dot"></div>
+    <div class="timeline-year">${year}</div>
+    <div class="timeline-title">${title}</div>
+    <div class="timeline-desc">${desc}</div>
+    <button class="btn btn-danger" style="margin-top:0.5rem;" onclick="this.closest('.timeline-item').remove()">🗑 מחק</button>
+  `;
+  tl.appendChild(item);
+  showToast(lang==='he' ? '📅 אירוע נוסף' : '📅 Event added');
+}
+
+// ══════════════════════════════════
+// UPLOAD MODAL
+// ══════════════════════════════════
+function adminUploadClick(type) {
+  if (!currentUser || currentUser.role !== 'admin') {
+    showToast(lang==='he' ? 'רק מנהל יכול להוסיף תמונות' : 'Only admin can add photos');
+    return;
+  }
+  openUploadModal(type);
+}
+
+function openUploadModal(type) {
+  if (!currentUser || currentUser.role !== 'admin') {
+    showToast(lang==='he' ? 'יש להתחבר כמנהל' : 'Please login as admin'); return;
+  }
+  currentUploadType = type;
+  document.getElementById('videoTitleGroup').style.display = type === 'video' ? 'flex' : 'none';
+  document.getElementById('uploadModal').classList.add('open');
+  updateDrivePanel();
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['url','drive','file'][i] === tab);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+function submitUrl() {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) return;
+  const title = document.getElementById('urlTitle').value.trim() || (lang==='he' ? 'סרטון חדש' : 'New Video');
+  if (currentUploadType === 'photo') {
+    addPhotoToGallery(url, '');
+  } else {
+    addVideoToGrid(title, url);
+  }
+  document.getElementById('urlInput').value = '';
+  document.getElementById('urlTitle').value = '';
+  closeModal('uploadModal');
+  showToast(currentUploadType==='photo' ? '📷 תמונה נוספה' : '🎬 סרטון נוסף');
+}
+
+function addPhotoToGallery(src, caption) {
+  const grid = document.getElementById('galleryGrid');
+  const item = document.createElement('div');
+  item.className = 'gallery-item';
+  item.innerHTML = `<img class="gallery-img" src="${src}" alt="${caption}" onclick="openLightbox(this)" onerror="this.parentElement.innerHTML='<div class=gallery-placeholder><div class=icon>❌</div></div>'">`;
+  grid.appendChild(item);
+}
+
+function addVideoToGrid(title, url) {
+  const grid = document.getElementById('videoGrid');
+  const card = document.createElement('div');
+  card.className = 'video-card';
+  const isYouTube = url.includes('youtube') || url.includes('youtu.be');
+  const thumbUrl = isYouTube ? getYouTubeThumbnail(url) : '';
+  card.innerHTML = `
+    <div class="video-thumb" onclick="${url ? `window.open('${url}','_blank')` : `showToast('קישור לא זמין')`}" style="${thumbUrl ? `background-image:url(${thumbUrl});background-size:cover;background-position:center` : ''}">
+      <div class="play-btn"><div class="play-icon"></div></div>
+    </div>
+    <div class="video-info">
+      <div class="video-title">${title}</div>
+      <div class="video-meta">${url}</div>
+    </div>
+    ${currentUser?.role==='admin' ? `<button class="btn btn-danger" style="margin:0.5rem;" onclick="this.closest('.video-card').remove()">🗑</button>` : ''}
+  `;
+  grid.appendChild(card);
+}
+
+function getYouTubeThumbnail(url) {
+  let id = '';
+  const m = url.match(/(?:v=|youtu\.be\/)([^&\?]+)/);
+  if (m) id = m[1];
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : '';
+}
+
+// ══════════════════════════════════
+// LOCAL FILE UPLOAD
+// ══════════════════════════════════
+function handleLocalFile(files) {
+  if (!files || !files[0]) return;
+  const file = files[0];
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    if (currentUploadType === 'photo') {
+      addPhotoToGallery(e.target.result, file.name);
+    } else {
+      addVideoToGrid(file.name, e.target.result);
+    }
+    closeModal('uploadModal');
+    showToast(currentUploadType==='photo' ? '📷 תמונה נוספה' : '🎬 סרטון נוסף');
+  };
+  reader.readAsDataURL(file);
+}
+
+// ══════════════════════════════════
+// GOOGLE DRIVE
+// ══════════════════════════════════
+function updateDrivePanel() {
+  const connected = driveConfig.apiKey && driveConfig.folderId;
+  document.getElementById('driveNotConnected').style.display = connected ? 'none' : 'block';
+  document.getElementById('driveConnected').style.display = connected ? 'block' : 'none';
+  if (connected) {
+    document.getElementById('driveInfo').textContent = `📁 Folder: ${driveConfig.folderId.substring(0,16)}...`;
+  }
+}
+
+function updateDriveStatusBadge() {
+  const badge = document.getElementById('driveStatusBadge');
+  if (!currentUser) { badge.innerHTML = ''; return; }
+  const connected = driveConfig.apiKey && driveConfig.folderId;
+  badge.innerHTML = connected
+    ? `<span class="drive-status connected">☁️ Drive מחובר</span>`
+    : `<span class="drive-status disconnected" onclick="openDriveSetup()">☁️ חבר Drive</span>`;
+}
+
+function openDriveSetup() {
+  closeModal('uploadModal');
+  document.getElementById('driveApiKey').value = driveConfig.apiKey;
+  document.getElementById('driveFolderId').value = driveConfig.folderId;
+  document.getElementById('driveClientId').value = driveConfig.clientId;
+  document.getElementById('driveSetupModal').classList.add('open');
+}
+
+function saveDriveConfig() {
+  driveConfig.apiKey = document.getElementById('driveApiKey').value.trim();
+  driveConfig.folderId = document.getElementById('driveFolderId').value.trim();
+  driveConfig.clientId = document.getElementById('driveClientId').value.trim();
+  localStorage.setItem('driveApiKey', driveConfig.apiKey);
+  localStorage.setItem('driveFolderId', driveConfig.folderId);
+  localStorage.setItem('driveClientId', driveConfig.clientId);
+  closeModal('driveSetupModal');
+  updateDriveStatusBadge();
+  showToast(lang==='he' ? '☁️ הגדרות Drive נשמרו' : '☁️ Drive settings saved');
+}
+
+async function handleDriveUpload(files) {
+  if (!files || !files[0]) return;
+  const file = files[0];
+  if (!driveConfig.apiKey || !driveConfig.folderId) {
+    showToast(lang==='he' ? 'יש להגדיר Drive תחילה' : 'Please configure Drive first');
+    openDriveSetup(); return;
+  }
+  
+  // Show progress
+  const prog = document.getElementById('driveProgress');
+  const bar = document.getElementById('driveProgressBar');
+  prog.style.display = 'block';
+  bar.style.width = '10%';
+
+  try {
+    // Use Drive API v3 multipart upload
+    const meta = { name: file.name, parents: [driveConfig.folderId] };
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+    form.append('file', file);
+
+    bar.style.width = '40%';
+
+    const res = await fetch(
+      `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,webContentLink&key=${driveConfig.apiKey}`,
+      { method: 'POST', body: form }
+    );
+
+    bar.style.width = '80%';
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || 'Upload failed');
+    }
+
+    const data = await res.json();
+    bar.style.width = '100%';
+
+    // Build direct URL
+    const directUrl = `https://drive.google.com/uc?export=view&id=${data.id}`;
+    
+    setTimeout(() => {
+      prog.style.display = 'none';
+      bar.style.width = '0%';
+      if (currentUploadType === 'photo') {
+        addPhotoToGallery(directUrl, file.name);
+      } else {
+        addVideoToGrid(file.name, data.webViewLink);
+      }
+      closeModal('uploadModal');
+      showToast(lang==='he' ? `☁️ הועלה בהצלחה ל-Drive: ${data.name}` : `☁️ Uploaded to Drive: ${data.name}`);
+    }, 400);
+
+  } catch(e) {
+    prog.style.display = 'none';
+    bar.style.width = '0%';
+    console.error('Drive upload error:', e);
+    showToast(lang==='he' ? `❌ שגיאת העלאה: ${e.message}` : `❌ Upload error: ${e.message}`);
+  }
+}
+
+function openDriveGuide() {
+  closeModal('driveSetupModal');
+  document.getElementById('driveGuideModal').classList.add('open');
+}
+
+// ══════════════════════════════════
+// LIGHTBOX
+// ══════════════════════════════════
+function openLightbox(img) {
+  document.getElementById('lightboxImg').src = img.src;
+  document.getElementById('lightboxCaption').textContent = img.alt || '';
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+
+// ══════════════════════════════════
+// TOAST
+// ══════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ══════════════════════════════════
+// SMOOTH SCROLL
+// ══════════════════════════════════
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const el = document.querySelector(a.getAttribute('href'));
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+// ══════════════════════════════════
+// INIT
+// ══════════════════════════════════
+['לילך', 'צפריר', 'חברים', 'גולני'].forEach(n => candles.push(n));
+renderCandles();
+
+// Drag & drop for upload areas
+document.querySelectorAll('.upload-area').forEach(area => {
+  area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('drag-over'); });
+  area.addEventListener('dragleave', () => area.classList.remove('drag-over'));
+  area.addEventListener('drop', e => {
+    e.preventDefault();
+    area.classList.remove('drag-over');
+    const files = e.dataTransfer.files;
+    if (area.id === 'driveUploadArea') handleDriveUpload(files);
+    else handleLocalFile(files);
+  });
+});
+
+// Close lightbox on Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+    closeLightbox();
+  }
+});
+</script>
+</body>
+</html>
