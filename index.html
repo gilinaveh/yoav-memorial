@@ -739,7 +739,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
 
     <!-- Local File Tab -->
     <div class="tab-panel" id="tab-file">
-      <div class="upload-area">
+      <div class="upload-area" id="localUploadArea">
         <input type="file" id="localFileInput" accept="image/*,video/*" onchange="handleLocalFile(this.files)">
         <div class="upload-icon">📁</div>
         <div class="upload-text">
@@ -747,9 +747,12 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
           <span data-he>או לחץ לבחירת קובץ מהמחשב</span><span data-en>or click to choose from your computer</span>
         </div>
       </div>
+      <div class="upload-progress" id="localUploadProgress" style="display:none;margin-top:0.75rem;">
+        <div class="upload-progress-bar" id="localUploadBar" style="width:0%"></div>
+      </div>
       <div class="info-box" style="margin-top:1rem;">
-        <span data-he>⚠️ <strong>שימו לב:</strong> קבצים מקומיים אינם נשמרים בין רענונים. לאחסון קבוע, השתמש ב-Google Drive.</span>
-        <span data-en>⚠️ <strong>Note:</strong> Local files are not saved between refreshes. For permanent storage, use Google Drive.</span>
+        <span data-he>☁️ <strong>אחסון קבוע:</strong> התמונות נשמרות בענן ונראות בכל מכשיר ובכל דפדפן.</span>
+        <span data-en>☁️ <strong>Permanent storage:</strong> Photos are saved to the cloud and visible on every device and browser.</span>
       </div>
     </div>
   </div>
@@ -1360,22 +1363,88 @@ function getYouTubeThumbnail(url) {
 }
 
 // ══════════════════════════════════
-// LOCAL FILE UPLOAD
+// LOCAL FILE UPLOAD — with cloud persistence
 // ══════════════════════════════════
-function handleLocalFile(files) {
+async function handleLocalFile(files) {
   if (!files || !files[0]) return;
   const file = files[0];
-  const reader = new FileReader();
-  reader.onload = (e) => {
+
+  // Show progress
+  const prog = document.getElementById('localUploadProgress');
+  const bar = document.getElementById('localUploadBar');
+  prog.style.display = 'block';
+  bar.style.width = '15%';
+
+  try {
+    // Convert to base64
+    const base64 = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result); // full data URL
+      r.onerror = () => rej(new Error('Read failed'));
+      r.readAsDataURL(file);
+    });
+
+    bar.style.width = '40%';
+
     if (currentUploadType === 'photo') {
-      addPhotoToGallery(e.target.result, file.name);
+      // Store to Anthropic persistent storage
+      const key = 'photo_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+      await window.storage.set(key, JSON.stringify({ src: base64, caption: file.name, ts: Date.now() }), true);
+      bar.style.width = '80%';
+
+      // Also save key reference to siteData so Sheets knows about it
+      addPhotoToGallery(base64, file.name);
     } else {
-      addVideoToGrid(file.name, e.target.result);
+      addVideoToGrid(file.name, base64);
     }
+
+    bar.style.width = '100%';
+    setTimeout(() => { prog.style.display = 'none'; bar.style.width = '0%'; }, 500);
     closeModal('uploadModal');
-    showToast(currentUploadType==='photo' ? '📷 תמונה נוספה' : '🎬 סרטון נוסף');
-  };
-  reader.readAsDataURL(file);
+    showToast(currentUploadType === 'photo' ? '📷 תמונה נשמרה בענן ✓' : '🎬 סרטון נוסף');
+
+  } catch(e) {
+    prog.style.display = 'none';
+    bar.style.width = '0%';
+    console.error('Upload error:', e);
+    // Fallback: use base64 locally only
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (currentUploadType === 'photo') addPhotoToGallery(ev.target.result, file.name);
+      else addVideoToGrid(file.name, ev.target.result);
+      closeModal('uploadModal');
+      showToast(currentUploadType === 'photo' ? '📷 תמונה נוספה (מקומית)' : '🎬 סרטון נוסף');
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+// ══════════════════════════════════
+// LOAD PHOTOS FROM ANTHROPIC STORAGE (cross-device)
+// ══════════════════════════════════
+async function loadPhotosFromStorage() {
+  try {
+    const result = await window.storage.list('photo_', true);
+    if (!result || !result.keys || result.keys.length === 0) return;
+
+    // Get already-loaded srcs to avoid duplicates
+    const loadedSrcs = new Set(siteData.photos.map(p => p.src));
+
+    for (const key of result.keys) {
+      try {
+        const item = await window.storage.get(key, true);
+        if (item && item.value) {
+          const data = JSON.parse(item.value);
+          if (data.src && !loadedSrcs.has(data.src)) {
+            addPhotoToGallery(data.src, data.caption || '', false);
+            loadedSrcs.add(data.src);
+          }
+        }
+      } catch(e) { /* skip bad entries */ }
+    }
+  } catch(e) {
+    console.log('Storage load skipped:', e.message);
+  }
 }
 
 // ══════════════════════════════════
@@ -1545,7 +1614,7 @@ document.querySelectorAll('.upload-area').forEach(area => {
     area.classList.remove('drag-over');
     const files = e.dataTransfer.files;
     if (area.id === 'driveUploadArea') handleDriveUpload(files);
-    else handleLocalFile(files);
+    else if (area.id === 'localUploadArea') handleLocalFile(files);
   });
 });
 
@@ -1557,7 +1626,11 @@ document.addEventListener('keydown', e => {
   }
 });
 
-window.addEventListener('DOMContentLoaded', () => { if (SHEETS_URL) loadFromSheets(); });
+window.addEventListener('DOMContentLoaded', async () => {
+  if (SHEETS_URL) loadFromSheets();
+  // Always load cloud-stored photos (works on all devices without Sheets)
+  await loadPhotosFromStorage();
+});
 </script>
 </body>
 </html>
