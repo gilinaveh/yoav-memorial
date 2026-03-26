@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>לזכרו של יואב אגמון | In Memory of Yoav Agmon</title>
+<!-- Google Identity Services for OAuth Drive upload -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300;400;500;700;900&family=Heebo:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -770,40 +772,48 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
       <div style="font-size:0.75rem;color:var(--text-light);margin-top:0.3rem;"><span data-he>ישמור תמונות, סיפורים, תגובות ונרות לצמיתות לכל המבקרים</span><span data-en>Saves photos, stories, comments and candles permanently for all visitors</span></div>
     </div>
     <div class="form-group" style="margin-bottom:1rem;">
-      <label><span data-he>Google API Key</span><span data-en>Google API Key</span></label>
-      <input id="driveApiKey" type="text" placeholder="AIzaSy..." value="">
-    </div>
-    <div class="form-group" style="margin-bottom:1rem;">
-      <label><span data-he>Drive Folder ID (לתמונות יואב)</span><span data-en>Drive Folder ID (for Yoav's photos)</span></label>
-      <input id="driveFolderId" type="text" placeholder="1BxiM...">
+      <label><span data-he>OAuth Client ID</span><span data-en>OAuth Client ID</span></label>
+      <input id="driveClientId" type="text" placeholder="123456789...apps.googleusercontent.com">
+      <div style="font-size:0.75rem;color:var(--text-light);margin-top:0.3rem;">
+        <span data-he>נדרש לכניסה עם Google ולהעלאת תמונות. ניתן לשמש לכל המשפחה.</span>
+        <span data-en>Required for Google sign-in and photo uploads.</span>
+      </div>
     </div>
     <div class="form-group" style="margin-bottom:1.5rem;">
-      <label><span data-he>Client ID (OAuth)</span><span data-en>Client ID (OAuth)</span></label>
-      <input id="driveClientId" type="text" placeholder="123456...apps.googleusercontent.com">
+      <label><span data-he>Drive Folder ID (תיקיית תמונות יואב)</span><span data-en>Drive Folder ID (Yoav's photo folder)</span></label>
+      <input id="driveFolderId" type="text" placeholder="1BxiM...">
+      <div style="font-size:0.75rem;color:var(--text-light);margin-top:0.3rem;">
+        <span data-he>העתק מה-URL של תיקיית Drive: drive.google.com/drive/folders/<strong style="color:var(--gold);">ID_כאן</strong></span>
+        <span data-en>Copy from Drive folder URL: drive.google.com/drive/folders/<strong style="color:var(--gold);">ID_HERE</strong></span>
+      </div>
     </div>
+    <!-- hidden: keep for backward compat but not shown -->
+    <input id="driveApiKey" type="hidden" value="">
     <button class="btn btn-gold" style="width:100%;margin-bottom:0.75rem;" onclick="saveDriveConfig()">
-      <span data-he>שמור ובדוק חיבור</span><span data-en>Save & Test Connection</span>
+      <span data-he>שמור הגדרות</span><span data-en>Save Settings</span>
     </button>
     <div class="info-box">
       <span data-he>
-        <strong>📋 הוראות מהירות:</strong><br>
+        <strong>📋 הוראות קצרות:</strong><br>
         1. לך ל-<a href="https://console.cloud.google.com" target="_blank" style="color:var(--gold);">console.cloud.google.com</a><br>
-        2. צור פרויקט חדש → הפעל "Google Drive API"<br>
-        3. "Credentials" → "Create API Key" → הגבל לדומיין שלך<br>
-        4. צור OAuth Client ID (type: Web application)<br>
-        5. צור תיקיה ב-Drive → העתק את ה-ID מה-URL<br>
+        2. צור פרויקט → הפעל "Google Drive API"<br>
+        3. Credentials → OAuth Client ID → Web application<br>
+        4. הוסף ל-"Authorized JS Origins": <code style="color:var(--gold-light);">https://gilinaveh.github.io</code><br>
+        5. צור תיקיה ב-Drive → העתק ID מה-URL<br>
         <br>
-        <a href="javascript:void(0)" onclick="openDriveGuide()" style="color:var(--gold);">📖 מדריך מלא עם צילומי מסך »</a>
+        ⚠️ <strong>חשוב:</strong> כשתלחץ "העלה לDrive" תיפתח חלון Google לאישור — זה תקין.<br>
+        <a href="javascript:void(0)" onclick="openDriveGuide()" style="color:var(--gold);">📖 מדריך מלא »</a>
       </span>
       <span data-en>
-        <strong>📋 Quick Steps:</strong><br>
+        <strong>📋 Quick Setup:</strong><br>
         1. Go to <a href="https://console.cloud.google.com" target="_blank" style="color:var(--gold);">console.cloud.google.com</a><br>
         2. New project → Enable "Google Drive API"<br>
-        3. "Credentials" → "Create API Key" → Restrict to your domain<br>
-        4. Create OAuth Client ID (type: Web application)<br>
-        5. Create Drive folder → Copy ID from URL<br>
+        3. Credentials → OAuth Client ID → Web application<br>
+        4. Add to "Authorized JS Origins": <code style="color:var(--gold-light);">https://gilinaveh.github.io</code><br>
+        5. Create a Drive folder → copy ID from URL<br>
         <br>
-        <a href="javascript:void(0)" onclick="openDriveGuide()" style="color:var(--gold);">📖 Full guide with screenshots »</a>
+        ⚠️ <strong>Note:</strong> Clicking "Upload to Drive" will open a Google sign-in popup — this is normal.<br>
+        <a href="javascript:void(0)" onclick="openDriveGuide()" style="color:var(--gold);">📖 Full guide »</a>
       </span>
     </div>
   </div>
@@ -1451,7 +1461,7 @@ async function loadPhotosFromStorage() {
 // GOOGLE DRIVE
 // ══════════════════════════════════
 function updateDrivePanel() {
-  const connected = driveConfig.apiKey && driveConfig.folderId;
+  const connected = driveConfig.clientId && driveConfig.folderId;
   document.getElementById('driveNotConnected').style.display = connected ? 'none' : 'block';
   document.getElementById('driveConnected').style.display = connected ? 'block' : 'none';
   if (connected) {
@@ -1462,7 +1472,7 @@ function updateDrivePanel() {
 function updateDriveStatusBadge() {
   const badge = document.getElementById('driveStatusBadge');
   if (!currentUser) { badge.innerHTML = ''; return; }
-  const connected = driveConfig.apiKey && driveConfig.folderId;
+  const connected = driveConfig.clientId && driveConfig.folderId;
   badge.innerHTML = connected
     ? `<span class="drive-status connected">☁️ Drive מחובר</span>`
     : `<span class="drive-status disconnected" onclick="openDriveSetup()">☁️ חבר Drive</span>`;
@@ -1484,6 +1494,9 @@ function saveDriveConfig() {
   localStorage.setItem('driveApiKey', driveConfig.apiKey);
   localStorage.setItem('driveFolderId', driveConfig.folderId);
   localStorage.setItem('driveClientId', driveConfig.clientId);
+  // Reset token cache so new client ID takes effect
+  _driveAccessToken = null;
+  _tokenClient = null;
   // Save Sheets URL
   const sheetsInput = document.getElementById('sheetsUrlInput');
   if (sheetsInput && sheetsInput.value.trim()) {
@@ -1501,65 +1514,136 @@ function saveDriveConfig() {
   }
 }
 
+// ── OAuth token state ──
+let _driveAccessToken = null;
+let _tokenClient = null;
+
+function getTokenClient() {
+  if (_tokenClient) return _tokenClient;
+  if (!driveConfig.clientId) {
+    showToast(lang==='he' ? '⚠️ יש להגדיר Client ID תחילה' : '⚠️ Please configure Client ID first');
+    openDriveSetup();
+    return null;
+  }
+  _tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: driveConfig.clientId,
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    callback: () => {}, // will be set per-call
+  });
+  return _tokenClient;
+}
+
+function requestDriveToken(callback) {
+  const client = getTokenClient();
+  if (!client) return;
+  client.callback = (resp) => {
+    if (resp.error) {
+      showToast(lang==='he' ? `❌ שגיאת הרשאה: ${resp.error}` : `❌ Auth error: ${resp.error}`);
+      return;
+    }
+    _driveAccessToken = resp.access_token;
+    callback(_driveAccessToken);
+  };
+  // If we already have a valid token, use it directly
+  if (_driveAccessToken) {
+    callback(_driveAccessToken);
+  } else {
+    client.requestAccessToken({ prompt: 'consent' });
+  }
+}
+
 async function handleDriveUpload(files) {
   if (!files || !files[0]) return;
   const file = files[0];
-  if (!driveConfig.apiKey || !driveConfig.folderId) {
-    showToast(lang==='he' ? 'יש להגדיר Drive תחילה' : 'Please configure Drive first');
-    openDriveSetup(); return;
+
+  if (!driveConfig.clientId) {
+    showToast(lang==='he' ? 'יש להגדיר Client ID תחילה' : 'Please configure Client ID first');
+    openDriveSetup();
+    return;
   }
-  
-  // Show progress
-  const prog = document.getElementById('driveProgress');
-  const bar = document.getElementById('driveProgressBar');
-  prog.style.display = 'block';
-  bar.style.width = '10%';
+  if (!driveConfig.folderId) {
+    showToast(lang==='he' ? 'יש להגדיר Folder ID תחילה' : 'Please configure Folder ID first');
+    openDriveSetup();
+    return;
+  }
 
-  try {
-    // Use Drive API v3 multipart upload
-    const meta = { name: file.name, parents: [driveConfig.folderId] };
-    const form = new FormData();
-    form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
-    form.append('file', file);
+  // Request OAuth token — this opens Google's sign-in popup if needed
+  requestDriveToken(async (token) => {
+    const prog = document.getElementById('driveProgress');
+    const bar  = document.getElementById('driveProgressBar');
+    prog.style.display = 'block';
+    bar.style.width = '10%';
 
-    bar.style.width = '40%';
+    try {
+      // Step 1: Upload file with multipart
+      const meta = JSON.stringify({ name: file.name, parents: [driveConfig.folderId] });
+      const body = new FormData();
+      body.append('metadata', new Blob([meta], { type: 'application/json' }));
+      body.append('file', file);
 
-    const res = await fetch(
-      `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,webContentLink&key=${driveConfig.apiKey}`,
-      { method: 'POST', body: form }
-    );
+      bar.style.width = '40%';
 
-    bar.style.width = '80%';
+      const uploadRes = await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name',
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body
+        }
+      );
 
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error?.message || 'Upload failed');
-    }
+      bar.style.width = '70%';
 
-    const data = await res.json();
-    bar.style.width = '100%';
+      if (!uploadRes.ok) {
+        const errData = await uploadRes.json().catch(() => ({}));
+        // If token expired, clear it and retry once
+        if (uploadRes.status === 401) {
+          _driveAccessToken = null;
+          prog.style.display = 'none'; bar.style.width = '0%';
+          showToast(lang==='he' ? '🔄 פג תוקף ההרשאה — מחדש...' : '🔄 Token expired — refreshing...');
+          setTimeout(() => handleDriveUpload(files), 500);
+          return;
+        }
+        throw new Error(errData.error?.message || `HTTP ${uploadRes.status}`);
+      }
 
-    // Build direct URL
-    const directUrl = `https://drive.google.com/uc?export=view&id=${data.id}`;
-    
-    setTimeout(() => {
+      const uploadData = await uploadRes.json();
+      const fileId = uploadData.id;
+
+      // Step 2: Make file publicly readable so it shows as an image on the site
+      await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ role: 'reader', type: 'anyone' })
+      });
+
+      bar.style.width = '100%';
+
+      // Use thumbnail URL which works cross-device without sign-in
+      const imgUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1200`;
+
+      setTimeout(() => {
+        prog.style.display = 'none';
+        bar.style.width = '0%';
+        if (currentUploadType === 'photo') {
+          addPhotoToGallery(imgUrl, file.name);
+        } else {
+          addVideoToGrid(file.name, `https://drive.google.com/file/d/${fileId}/view`);
+        }
+        closeModal('uploadModal');
+        showToast(lang==='he' ? `☁️ הועלה בהצלחה: ${uploadData.name}` : `☁️ Uploaded: ${uploadData.name}`);
+      }, 400);
+
+    } catch(e) {
       prog.style.display = 'none';
       bar.style.width = '0%';
-      if (currentUploadType === 'photo') {
-        addPhotoToGallery(directUrl, file.name);
-      } else {
-        addVideoToGrid(file.name, data.webViewLink);
-      }
-      closeModal('uploadModal');
-      showToast(lang==='he' ? `☁️ הועלה בהצלחה ל-Drive: ${data.name}` : `☁️ Uploaded to Drive: ${data.name}`);
-    }, 400);
-
-  } catch(e) {
-    prog.style.display = 'none';
-    bar.style.width = '0%';
-    console.error('Drive upload error:', e);
-    showToast(lang==='he' ? `❌ שגיאת העלאה: ${e.message}` : `❌ Upload error: ${e.message}`);
-  }
+      console.error('Drive upload error:', e);
+      showToast(lang==='he' ? `❌ שגיאת העלאה: ${e.message}` : `❌ Upload error: ${e.message}`);
+    }
+  });
 }
 
 function openDriveGuide() {
