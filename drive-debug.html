@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Drive Upload Debug</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  body { font-family: monospace; background: #1a1a2e; color: #eee; padding: 2rem; max-width: 700px; margin: 0 auto; }
+  h1 { color: #C9A84C; }
+  input { width: 100%; padding: 0.6rem; margin: 0.3rem 0 1rem; background: #222; border: 1px solid #444; color: #fff; border-radius: 4px; font-family: monospace; }
+  button { padding: 0.7rem 1.5rem; background: #C9A84C; color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 0.5rem; margin-bottom: 0.5rem; }
+  button:hover { background: #e8d5a3; }
+  button.secondary { background: #2a4a6a; color: #fff; }
+  .log { background: #0d1117; border: 1px solid #333; border-radius: 4px; padding: 1rem; margin-top: 1rem; min-height: 200px; max-height: 400px; overflow-y: auto; font-size: 0.85rem; line-height: 1.8; }
+  .ok { color: #4caf50; }
+  .err { color: #f44336; }
+  .info { color: #64b5f6; }
+  .warn { color: #ffb300; }
+  label { font-size: 0.85rem; color: #aaa; }
+  .section { background: #16213e; border: 1px solid #333; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
+  #fileInput { display: none; }
+  .file-label { display: inline-block; padding: 0.7rem 1.5rem; background: #2a4a6a; color: #fff; border-radius: 4px; cursor: pointer; margin-bottom: 0.5rem; }
+</style>
+</head>
+<body>
+
+<h1>🔧 Google Drive Upload Debugger</h1>
+<p style="color:#aaa;">This page tests your OAuth Client ID and Drive Folder ID step by step.<br>Open your browser console (F12) for extra details.</p>
+
+<div class="section">
+  <label>OAuth Client ID</label>
+  <input id="clientId" placeholder="123456789...apps.googleusercontent.com">
+  <label>Drive Folder ID</label>
+  <input id="folderId" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms">
+</div>
+
+<div class="section">
+  <h3 style="color:#C9A84C;margin-top:0;">Tests</h3>
+
+  <button onclick="testStep1()">① Check GIS Library</button>
+  <button onclick="testStep2()">② Test OAuth Token</button>
+  <button onclick="testStep3()">③ Test Drive API Access</button>
+  <br>
+  <label class="file-label" for="fileInput">④ Choose Test Photo</label>
+  <input type="file" id="fileInput" accept="image/*" onchange="testStep4(this.files)">
+  <button onclick="testStep5()">⑤ Full Upload Test</button>
+</div>
+
+<div class="log" id="log"><span class="info">Ready. Run tests in order ① → ⑤</span></div>
+
+<script>
+let token = null;
+let testFile = null;
+
+function log(msg, type='info') {
+  const el = document.getElementById('log');
+  const line = document.createElement('div');
+  line.className = type;
+  line.textContent = (type==='ok'?'✅ ':type==='err'?'❌ ':type==='warn'?'⚠️ ':'ℹ️ ') + msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+  console.log(`[${type.toUpperCase()}]`, msg);
+}
+
+function getConfig() {
+  return {
+    clientId: document.getElementById('clientId').value.trim(),
+    folderId: document.getElementById('folderId').value.trim()
+  };
+}
+
+// ① Check GIS library loaded
+function testStep1() {
+  log('--- Test 1: GIS Library ---', 'info');
+  if (typeof google === 'undefined') {
+    log('google object NOT found. GIS library failed to load.', 'err');
+    log('Check your internet connection or ad blocker.', 'warn');
+    return;
+  }
+  if (typeof google.accounts === 'undefined') {
+    log('google.accounts NOT found.', 'err');
+    return;
+  }
+  if (typeof google.accounts.oauth2 === 'undefined') {
+    log('google.accounts.oauth2 NOT found.', 'err');
+    return;
+  }
+  log('GIS library loaded correctly!', 'ok');
+  log('google.accounts.oauth2 is available', 'ok');
+}
+
+// ② Test OAuth token request
+function testStep2() {
+  log('--- Test 2: OAuth Token ---', 'info');
+  const { clientId } = getConfig();
+  if (!clientId) { log('Client ID is empty! Fill it in above.', 'err'); return; }
+  if (!clientId.includes('apps.googleusercontent.com')) {
+    log('Client ID format looks wrong. Should end in .apps.googleusercontent.com', 'warn');
+  }
+  log('Client ID: ' + clientId.substring(0,20) + '...', 'info');
+  log('Requesting OAuth token — a Google popup should appear...', 'info');
+
+  try {
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: 'https://www.googleapis.com/auth/drive.file',
+      callback: (resp) => {
+        if (resp.error) {
+          log('OAuth error: ' + resp.error, 'err');
+          log('Details: ' + (resp.error_description || 'none'), 'err');
+          if (resp.error === 'idpiframe_initialization_failed') {
+            log('This usually means the current domain is not in Authorized JS Origins in Google Cloud Console', 'warn');
+            log('Current origin: ' + window.location.origin, 'warn');
+          }
+          return;
+        }
+        token = resp.access_token;
+        log('OAuth token received!', 'ok');
+        log('Token starts with: ' + token.substring(0,20) + '...', 'ok');
+        log('Now run Test ③ to verify Drive API access', 'info');
+      }
+    });
+    client.requestAccessToken({ prompt: 'consent' });
+  } catch(e) {
+    log('Exception: ' + e.message, 'err');
+  }
+}
+
+// ③ Test Drive API access (list folder)
+async function testStep3() {
+  log('--- Test 3: Drive API Access ---', 'info');
+  if (!token) { log('No token yet — run Test ② first', 'err'); return; }
+  const { folderId } = getConfig();
+  if (!folderId) { log('Folder ID is empty!', 'err'); return; }
+
+  log('Checking folder: ' + folderId, 'info');
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&fields=files(id,name)`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const data = await res.json();
+    if (!res.ok) {
+      log('Drive API error: ' + (data.error?.message || res.status), 'err');
+      if (res.status === 403) log('Permission denied — make sure Drive API is enabled in Google Cloud Console', 'warn');
+      if (res.status === 404) log('Folder not found — check your Folder ID', 'warn');
+      return;
+    }
+    log('Drive API works!', 'ok');
+    log(`Folder contains ${data.files.length} file(s)`, 'ok');
+    data.files.forEach(f => log('  • ' + f.name, 'info'));
+    log('Now choose a test photo with button ④', 'info');
+  } catch(e) {
+    log('Fetch error: ' + e.message, 'err');
+  }
+}
+
+// ④ File selection
+function testStep4(files) {
+  if (!files || !files[0]) return;
+  testFile = files[0];
+  log('--- Test 4: File Selected ---', 'info');
+  log('File: ' + testFile.name + ' (' + (testFile.size/1024).toFixed(1) + ' KB)', 'ok');
+  log('Now run Test ⑤ to upload', 'info');
+}
+
+// ⑤ Full upload test
+async function testStep5() {
+  log('--- Test 5: Full Upload ---', 'info');
+  if (!token) { log('No token — run Test ② first', 'err'); return; }
+  if (!testFile) { log('No file — select one with button ④ first', 'err'); return; }
+  const { folderId } = getConfig();
+  if (!folderId) { log('Folder ID empty!', 'err'); return; }
+
+  log('Uploading: ' + testFile.name, 'info');
+
+  try {
+    const meta = JSON.stringify({ name: testFile.name, parents: [folderId] });
+    const body = new FormData();
+    body.append('metadata', new Blob([meta], { type: 'application/json' }));
+    body.append('file', testFile);
+
+    const uploadRes = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name',
+      { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body }
+    );
+
+    const uploadData = await uploadRes.json();
+    if (!uploadRes.ok) {
+      log('Upload failed: ' + (uploadData.error?.message || uploadRes.status), 'err');
+      return;
+    }
+    log('File uploaded! ID: ' + uploadData.id, 'ok');
+    log('Making file public...', 'info');
+
+    const permRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${uploadData.id}/permissions`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'reader', type: 'anyone' })
+      }
+    );
+
+    if (!permRes.ok) {
+      log('Permission set failed — file uploaded but may not be public', 'warn');
+    } else {
+      log('File is now public!', 'ok');
+    }
+
+    const imgUrl = `https://drive.google.com/thumbnail?id=${uploadData.id}&sz=w1200`;
+    log('Image URL: ' + imgUrl, 'ok');
+    log('', 'info');
+    log('🎉 EVERYTHING WORKS! The memorial site fix should work.', 'ok');
+    log('Open this URL to verify the image loads:', 'info');
+
+    const link = document.createElement('a');
+    link.href = imgUrl;
+    link.target = '_blank';
+    link.style.color = '#C9A84C';
+    link.textContent = '→ Open uploaded image';
+    document.getElementById('log').appendChild(link);
+
+  } catch(e) {
+    log('Exception: ' + e.message, 'err');
+  }
+}
+</script>
+</body>
+</html>
