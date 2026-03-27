@@ -1553,8 +1553,7 @@ async function handleDriveUpload(files) {
         prog.style.display = 'none';
         bar.style.width = '0%';
         if (currentUploadType === 'photo') {
-          addPhotoToGallery(imgUrl, file.name);
-          // Also reload all photos from Drive using current token
+          // Reload all photos from Drive — avoids duplicates
           await loadPhotosFromDriveAuth(token);
         } else {
           addVideoToGrid(file.name, `https://drive.google.com/file/d/${fileId}/view`);
@@ -1578,40 +1577,36 @@ function openDriveGuide() {
 }
 
 // ══════════════════════════════════
-// LOAD PHOTOS DIRECTLY FROM DRIVE FOLDER
+// LOAD PHOTOS DIRECTLY FROM DRIVE FOLDER (public, no login needed)
 // ══════════════════════════════════
+const DRIVE_API_KEY = 'AIzaSyAkd33J8OK8WY9PtyGEeKrcGLQ33ad16rA';
+
 async function loadPhotosFromDrive() {
   const folderId = driveConfig.folderId;
-  const apiKey = ''; // not needed — folder is public
   if (!folderId) return;
 
   try {
-    // Use Drive API v3 to list image files in the folder
-    // The folder and files are public (reader: anyone), so no auth needed for listing
     const res = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+mimeType+contains+'image/'&fields=files(id,name)&orderBy=createdTime+desc&key=AIzaSyD-placeholder`,
-      { headers: {} }
+      `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+mimeType+contains+'image/'&fields=files(id,name)&orderBy=createdTime+desc&key=${DRIVE_API_KEY}`
     );
 
-    // If API key not available, fall back to authenticated load
     if (!res.ok) {
-      // Try with OAuth token if available
-      if (_driveAccessToken) {
-        await loadPhotosFromDriveAuth(_driveAccessToken);
-      }
+      const err = await res.json();
+      console.log('Drive public load failed:', err.error?.message);
       return;
     }
 
     const data = await res.json();
     if (!data.files || data.files.length === 0) return;
 
-    const loadedSrcs = new Set(siteData.photos.map(p => p.src));
+    // Clear gallery first to avoid duplicates
+    const grid = document.getElementById('galleryGrid');
+    if (grid) grid.innerHTML = '';
+    siteData.photos = [];
+
     data.files.forEach(file => {
       const src = `https://drive.google.com/thumbnail?id=${file.id}&sz=w1200`;
-      if (!loadedSrcs.has(src)) {
-        addPhotoToGallery(src, file.name, false);
-        loadedSrcs.add(src);
-      }
+      addPhotoToGallery(src, file.name, false);
     });
   } catch(e) {
     console.log('Drive load skipped:', e.message);
@@ -1629,13 +1624,15 @@ async function loadPhotosFromDriveAuth(token) {
     if (!res.ok) return;
     const data = await res.json();
     if (!data.files) return;
-    const loadedSrcs = new Set(siteData.photos.map(p => p.src));
+
+    // Clear gallery first to avoid duplicates
+    const grid = document.getElementById('galleryGrid');
+    if (grid) grid.innerHTML = '';
+    siteData.photos = [];
+
     data.files.forEach(file => {
       const src = `https://drive.google.com/thumbnail?id=${file.id}&sz=w1200`;
-      if (!loadedSrcs.has(src)) {
-        addPhotoToGallery(src, file.name, false);
-        loadedSrcs.add(src);
-      }
+      addPhotoToGallery(src, file.name, false);
     });
   } catch(e) {
     console.log('Auth drive load error:', e.message);
