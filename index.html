@@ -929,12 +929,12 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
 // ══════════════════════════════════
 const USERS = {
   'tzafrir': {
-    pass: 'yoav2024',
+    pass: 'yoav2005!',
     role: 'admin',
     name: 'צפריר'
   },
   'lilach': {
-    pass: 'lilach2024',
+    pass: 'lilach2005!',
     role: 'admin',
     name: 'לילך (אמא)'
   }
@@ -942,14 +942,14 @@ const USERS = {
 
 let driveConfig = {
   apiKey: localStorage.getItem('driveApiKey') || '',
-  folderId: localStorage.getItem('driveFolderId') || '',
-  clientId: localStorage.getItem('driveClientId') || ''
+  folderId: localStorage.getItem('driveFolderId') || '1YdyRDpRVCXuTG9s6DmecrjkphfNN_3HP',
+  clientId: localStorage.getItem('driveClientId') || '403039923089-7u9pje36ubs60vto6sqlq6rrrks4a8pb.apps.googleusercontent.com'
 };
 
 // ══════════════════════════════════
-// SHEETS SYNC CONFIG
+// SHEETS SYNC CONFIG (disabled — using Drive directly)
 // ══════════════════════════════════
-let SHEETS_URL = localStorage.getItem('yoav_sheets_url') || '';
+let SHEETS_URL = '';
 let siteData = {
   photos: [],    // [{src, caption}]
   stories: [],   // [{author, text, date}]
@@ -1625,11 +1625,13 @@ async function handleDriveUpload(files) {
       // Use thumbnail URL which works cross-device without sign-in
       const imgUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1200`;
 
-      setTimeout(() => {
+      setTimeout(async () => {
         prog.style.display = 'none';
         bar.style.width = '0%';
         if (currentUploadType === 'photo') {
           addPhotoToGallery(imgUrl, file.name);
+          // Also reload all photos from Drive using current token
+          await loadPhotosFromDriveAuth(token);
         } else {
           addVideoToGrid(file.name, `https://drive.google.com/file/d/${fileId}/view`);
         }
@@ -1649,6 +1651,71 @@ async function handleDriveUpload(files) {
 function openDriveGuide() {
   closeModal('driveSetupModal');
   document.getElementById('driveGuideModal').classList.add('open');
+}
+
+// ══════════════════════════════════
+// LOAD PHOTOS DIRECTLY FROM DRIVE FOLDER
+// ══════════════════════════════════
+async function loadPhotosFromDrive() {
+  const folderId = driveConfig.folderId;
+  const apiKey = ''; // not needed — folder is public
+  if (!folderId) return;
+
+  try {
+    // Use Drive API v3 to list image files in the folder
+    // The folder and files are public (reader: anyone), so no auth needed for listing
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+mimeType+contains+'image/'&fields=files(id,name)&orderBy=createdTime+desc&key=AIzaSyD-placeholder`,
+      { headers: {} }
+    );
+
+    // If API key not available, fall back to authenticated load
+    if (!res.ok) {
+      // Try with OAuth token if available
+      if (_driveAccessToken) {
+        await loadPhotosFromDriveAuth(_driveAccessToken);
+      }
+      return;
+    }
+
+    const data = await res.json();
+    if (!data.files || data.files.length === 0) return;
+
+    const loadedSrcs = new Set(siteData.photos.map(p => p.src));
+    data.files.forEach(file => {
+      const src = `https://drive.google.com/thumbnail?id=${file.id}&sz=w1200`;
+      if (!loadedSrcs.has(src)) {
+        addPhotoToGallery(src, file.name, false);
+        loadedSrcs.add(src);
+      }
+    });
+  } catch(e) {
+    console.log('Drive load skipped:', e.message);
+  }
+}
+
+async function loadPhotosFromDriveAuth(token) {
+  const folderId = driveConfig.folderId;
+  if (!folderId || !token) return;
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+mimeType+contains+'image/'&fields=files(id,name)&orderBy=createdTime+desc`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.files) return;
+    const loadedSrcs = new Set(siteData.photos.map(p => p.src));
+    data.files.forEach(file => {
+      const src = `https://drive.google.com/thumbnail?id=${file.id}&sz=w1200`;
+      if (!loadedSrcs.has(src)) {
+        addPhotoToGallery(src, file.name, false);
+        loadedSrcs.add(src);
+      }
+    });
+  } catch(e) {
+    console.log('Auth drive load error:', e.message);
+  }
 }
 
 // ══════════════════════════════════
@@ -1711,9 +1778,8 @@ document.addEventListener('keydown', e => {
 });
 
 window.addEventListener('DOMContentLoaded', async () => {
-  if (SHEETS_URL) loadFromSheets();
-  // Always load cloud-stored photos (works on all devices without Sheets)
-  await loadPhotosFromStorage();
+  // Load photos directly from Drive folder — works on all devices
+  await loadPhotosFromDrive();
 });
 </script>
 </body>
