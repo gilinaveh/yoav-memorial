@@ -1335,10 +1335,15 @@ function appendUploadSlot(grid) {
   grid.appendChild(slot);
 }
 
-function addPhotoToGallery(src, caption, save=true) {
+function addPhotoToGallery(src, caption, save=true, addSlot=true) {
   const grid = document.getElementById('galleryGrid');
-  // Remove upload slot temporarily (will be re-added at end)
+  // Remove upload slot temporarily (will be re-added at end if needed)
   grid.querySelectorAll('.upload-slot').forEach(el => el.remove());
+
+  // Check for duplicate src before adding
+  const existing = Array.from(grid.querySelectorAll('.gallery-img'))
+    .find(img => img.src === src);
+  if (existing) return; // Already in gallery — skip
 
   const item = document.createElement('div');
   item.className = 'gallery-item';
@@ -1360,8 +1365,8 @@ function addPhotoToGallery(src, caption, save=true) {
   `;
   grid.appendChild(item);
 
-  // Re-add upload slot for admins
-  if (currentUser?.role === 'admin') appendUploadSlot(grid);
+  // Only re-add upload slot when explicitly requested (i.e. last photo in batch)
+  if (addSlot && currentUser?.role === 'admin') appendUploadSlot(grid);
   if (save) siteData.photos.push({ src, caption: caption||'' });
 }
 
@@ -1674,10 +1679,10 @@ async function loadPhotosFromDrive() {
     if (grid) grid.innerHTML = '';
     siteData.photos = [];
 
-    data.files.forEach(file => {
-      // Use Drive thumbnail URL — works publicly without login
+    data.files.forEach((file, i) => {
       const src = `https://drive.google.com/thumbnail?id=${file.id}&sz=w1200`;
-      addPhotoToGallery(src, file.name, false);
+      const isLast = i === data.files.length - 1;
+      addPhotoToGallery(src, file.name, false, isLast);
     });
 
     // Warn admins if folder is getting large
@@ -1712,9 +1717,10 @@ async function loadPhotosFromDriveAuth(token) {
     if (grid) grid.innerHTML = '';
     siteData.photos = [];
 
-    data.files.forEach(file => {
+    data.files.forEach((file, i) => {
       const src = `https://drive.google.com/thumbnail?id=${file.id}&sz=w1200`;
-      addPhotoToGallery(src, file.name, false);
+      const isLast = i === data.files.length - 1;
+      addPhotoToGallery(src, file.name, false, isLast);
     });
   } catch(e) {
     console.warn('Authenticated drive load error:', e.message);
