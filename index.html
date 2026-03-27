@@ -917,6 +917,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
   <button class="btn btn-outline" onclick="document.querySelectorAll('.admin-only').forEach(el=>el.style.display=el.style.display==='none'?'block':'none')">⚙️ <span data-he>כלי עריכה</span><span data-en>Edit Tools</span></button>
   <button class="btn btn-outline" onclick="openDriveSetup()" style="background:rgba(201,168,76,0.15);border-color:rgba(201,168,76,0.4);color:#E8D5A3;margin-right:8px;">☁️ <span data-he>הגדר Drive</span><span data-en>Setup Drive</span></button>
 
+  <button class="btn btn-outline" onclick="downloadBackup()" style="background:rgba(100,180,120,0.15);border-color:rgba(100,180,120,0.4);color:#7EC8A4;margin-right:8px;">💾 <span data-he>גיבוי</span><span data-en>Backup</span></button>
   <div class="admin-bar-label" id="adminBarLabel"></div>
 </div>
 
@@ -924,21 +925,880 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════
-// CONFIGURATION — CHANGE BEFORE PUBLISHING
-// ══════════════════════════════════
+/*
+ * ════════════════════════════════════════════════════════════════
+ *  YOAV AGMON MEMORIAL SITE — JavaScript
+ *  Last updated: March 2026
+ *
+ *  ARCHITECTURE OVERVIEW:
+ *  ─────────────────────
+ *  • Photos are stored in Google Drive ("Yoav Memorial Photos" folder)
+ *  • On page load, photos are fetched publicly via the Drive API (no login needed)
+ *  • Admins upload photos via Google OAuth 2.0 (GIS library)
+ *    — a Google sign-in popup appears, authorizes upload to Drive
+ *    — each uploaded file is made public so anyone can view it
+ *  • Comments, stories and candles are stored in browser memory only
+ *    (they show for the current session — a future improvement could
+ *     persist them via a backend service)
+ *
+ *  KEY CREDENTIALS (baked in for convenience):
+ *  ─────────────────────────────────────────
+ *  • DRIVE_FOLDER_ID  — the Google Drive folder for photos
+ *  • DRIVE_API_KEY    — read-only public API key for listing photos
+ *  • OAuth CLIENT_ID  — for admin upload authentication
+ *
+ *  SECURITY NOTES:
+ *  ───────────────
+ *  • The API key is restricted to this domain only (HTTP referrer restriction)
+ *  • The OAuth scope is 'drive.file' — the narrowest possible scope.
+ *    This means the app can ONLY access files it created itself.
+ *    It CANNOT read, modify or delete any other files in your Drive.
+ *  • Admin passwords are stored in plain text in this file — this is
+ *    acceptable for a private family site, but should not be used for
+ *    anything sensitive. Change passwords periodically.
+ *
+ *  BACKUP:
+ *  ───────
+ *  • Photos are safely stored in Google Drive — they are your backup.
+ *  • Admins can click "גיבוי / Backup" in the admin bar to download
+ *    a JSON file with all photo URLs, comments, stories, and candles.
+ *  • To restore from backup, re-upload photos to the Drive folder.
+ * ════════════════════════════════════════════════════════════════
+ */
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 1: CONFIGURATION
+// Change these values if you ever recreate the Google Cloud project
+// ══════════════════════════════════════════════════════════════
+
 const USERS = {
-  'tzafrir': {
-    pass: 'yoav2024',
-    role: 'admin',
-    name: 'צפריר'
-  },
-  'lilach': {
-    pass: 'lilach2024',
-    role: 'admin',
-    name: 'לילך (אמא)'
-  }
+  // Admin accounts — can upload photos and delete content
+  // Format: 'username': { pass: 'password', role: 'admin', name: 'Display Name' }
+  'tzafrir': { pass: 'yoav2024!', role: 'admin', name: 'צפריר' },
+  'lilach':  { pass: 'yoav2024!', role: 'admin', name: 'לילך (אמא)' }
 };
+
+// Google Drive configuration
+// These are baked in so no setup is needed after deployment
+const DRIVE_FOLDER_ID = '1YdyRDpRVCXuTG9s6DmecrjkphfNN_3HP'; // "Yoav Memorial Photos" folder
+const DRIVE_API_KEY   = 'AIzaSyAkd33J8OK8WY9PtyGEeKrcGLQ33ad16rA'; // Read-only, domain-restricted
+const OAUTH_CLIENT_ID = '403039923089-7u9pje36ubs60vto6sqlq6rrrks4a8pb.apps.googleusercontent.com';
+
+// driveConfig is what the rest of the code uses
+// localStorage overrides allow admins to change settings without editing code
+let driveConfig = {
+  apiKey:   localStorage.getItem('driveApiKey')   || '',
+  folderId: localStorage.getItem('driveFolderId') || DRIVE_FOLDER_ID,
+  clientId: localStorage.getItem('driveClientId') || OAUTH_CLIENT_ID
+};
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 2: APPLICATION STATE
+// These variables hold the current state of the page
+// ══════════════════════════════════════════════════════════════
+
+let currentUser = null;   // Logged-in admin user object, or null
+let lang = 'he';          // Current language: 'he' (Hebrew) or 'en' (English)
+let candles = [];         // Array of names who lit candles
+let currentUploadType = 'photo'; // 'photo' or 'video'
+let activeTab = 'url';    // Current tab in upload modal
+
+// In-memory store for content added this session
+// Note: This resets on page refresh — only photos persist via Drive
+let siteData = {
+  photos:   [], // [{ src, caption }]
+  stories:  [], // [{ author, text, date }]
+  candles:  [], // ['name', 'name', ...]
+  comments: [], // [{ name, relation, text, date }]
+  videos:   []  // [{ title, url }]
+};
+
+// Avatar color palette for comment display
+const avatarColors     = ['rgba(201,168,76,0.15)','rgba(74,127,165,0.15)','rgba(100,180,120,0.15)','rgba(180,100,100,0.15)'];
+const avatarTextColors = ['var(--gold)','var(--sky-light)','#7EC8A4','#C88080'];
+
+// Sheets not used — stub functions to prevent errors from any remaining references
+function saveToSheets() { /* disabled — using Drive directly */ }
+function loadFromSheets() { /* disabled — using Drive directly */ }
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 3: STAR ANIMATION
+// Creates the twinkling star background on the hero section
+// ══════════════════════════════════════════════════════════════
+
+(function createStars() {
+  const container = document.getElementById('starsContainer');
+  for (let i = 0; i < 80; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.style.cssText = `
+      left:${Math.random()*100}%;
+      top:${Math.random()*100}%;
+      --d:${2+Math.random()*4}s;
+      --delay:${Math.random()*3}s;
+      opacity:${0.1+Math.random()*0.6};
+      width:${1+Math.random()*2}px;
+      height:${1+Math.random()*2}px;
+    `;
+    container.appendChild(star);
+  }
+})();
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 4: LANGUAGE TOGGLE (Hebrew / English)
+// ══════════════════════════════════════════════════════════════
+
+function toggleLang() {
+  lang = lang === 'he' ? 'en' : 'he';
+  document.body.classList.toggle('lang-en', lang === 'en');
+  document.getElementById('langBtn').textContent = lang === 'he' ? 'EN' : 'עב';
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
+}
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 5: AUTHENTICATION
+// Simple password-based admin login (stored in USERS constant above)
+// This is suitable for a private family site
+// ══════════════════════════════════════════════════════════════
+
+function openLogin()      { document.getElementById('loginModal').classList.add('open'); }
+function closeModal(id)   { document.getElementById(id).classList.remove('open'); }
+
+function doLogin() {
+  const username = document.getElementById('loginUser').value.trim().toLowerCase();
+  const password = document.getElementById('loginPass').value;
+  const user = USERS[username];
+
+  if (!user || user.pass !== password) {
+    showToast(lang==='he' ? 'שם משתמש או סיסמה שגויים' : 'Invalid credentials');
+    return;
+  }
+
+  currentUser = { username, role: user.role, name: user.name };
+  closeModal('loginModal');
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  applyAuth();
+  showToast(`ברוך הבא, ${user.name}! 👋`);
+}
+
+function logout() {
+  currentUser = null;
+  document.getElementById('statusBar').classList.remove('visible');
+  document.getElementById('adminBar').classList.remove('visible');
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+  document.getElementById('loginBtn').style.display = '';
+  showToast(lang==='he' ? 'התנתקת בהצלחה' : 'Logged out successfully');
+}
+
+function applyAuth() {
+  // Called after successful login — shows admin UI elements
+  if (!currentUser) return;
+
+  // Show status bar with user name
+  const bar = document.getElementById('statusBar');
+  bar.classList.add('visible');
+  document.getElementById('statusText').textContent =
+    (lang==='he' ? 'מחובר: ' : 'Logged in: ') + currentUser.name + ' 🔑';
+  document.getElementById('loginBtn').style.display = 'none';
+  updateDriveStatusBadge();
+
+  // Add upload slot to gallery if empty
+  const grid = document.getElementById('galleryGrid');
+  if (grid && grid.children.length === 0) {
+    appendUploadSlot(grid);
+  }
+
+  // Show admin-only controls
+  if (currentUser.role === 'admin') {
+    document.getElementById('adminBar').classList.add('visible');
+    document.getElementById('adminBarLabel').textContent = currentUser.name;
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 6: CANDLES
+// Memorial candles — stored in memory for the session
+// ══════════════════════════════════════════════════════════════
+
+function lightCandle() {
+  const name = document.getElementById('candleName').value.trim()
+    || (lang==='he' ? 'אנונימי' : 'Anonymous');
+  candles.push(name);
+  siteData.candles = candles;
+  renderCandles();
+  document.getElementById('candleName').value = '';
+  showToast(lang==='he' ? '🕯️ הנר הודלק — יואב יזכר תמיד' : '🕯️ Candle lit — Yoav will always be remembered');
+}
+
+function renderCandles() {
+  document.getElementById('candleCount').textContent = candles.length;
+  const row = document.getElementById('candlesRow');
+  row.innerHTML = '';
+  // Show only the last 15 candles to avoid overflow
+  candles.slice(-15).forEach(name => {
+    const c = document.createElement('div');
+    c.className = 'candle';
+    c.style = `--f:${1.2+Math.random()*0.8}s;--fd:${Math.random()}s`;
+    c.innerHTML = `
+      <div class="candle-flame"></div>
+      <div class="candle-body"></div>
+      <div class="candle-name">${name}</div>
+    `;
+    row.appendChild(c);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 7: COMMENTS / TRIBUTES
+// Comments are shown for the session — they reset on refresh
+// Future improvement: store in a backend (Firebase, Supabase, etc.)
+// ══════════════════════════════════════════════════════════════
+
+function submitComment() {
+  const name     = document.getElementById('commentName').value.trim();
+  const relation = document.getElementById('commentRelation').value.trim();
+  const text     = document.getElementById('commentText').value.trim();
+
+  if (!name || !text) {
+    showToast(lang==='he' ? 'אנא מלא שם ומסר' : 'Please fill in name and message');
+    return;
+  }
+
+  const dateStr = new Date().toLocaleDateString('he-IL');
+  renderCommentItem(name, relation, text, dateStr, true);
+  document.getElementById('commentName').value = '';
+  document.getElementById('commentRelation').value = '';
+  document.getElementById('commentText').value = '';
+  showToast(lang==='he' ? '💙 המסר נשמר — תודה שזכרת את יואב' : '💙 Message saved — thank you for remembering Yoav');
+}
+
+function renderCommentItem(name, relation, text, dateStr, save=true) {
+  const container = document.getElementById('commentsContainer');
+  const colorIdx  = Math.floor(Math.random()*4);
+  const initial   = name.charAt(0);
+  const box       = document.createElement('div');
+  box.className   = 'comment-box';
+  box.style.animation = 'modal-in 0.3s ease';
+  box.innerHTML = `
+    <div class="comment-header">
+      <div class="avatar" style="background:${avatarColors[colorIdx]};color:${avatarTextColors[colorIdx]};">${initial}</div>
+      <div class="comment-meta">
+        <div class="comment-author">${name}${relation ? ' ('+relation+')' : ''}</div>
+        <div class="comment-date">${dateStr}</div>
+      </div>
+      ${currentUser?.role==='admin'
+        ? `<button class="btn btn-danger" onclick="removeComment(this, '${name}', '${text.slice(0,20)}')">🗑</button>`
+        : ''}
+    </div>
+    <div class="comment-text">${text}</div>
+  `;
+  container.appendChild(box);
+  if (save) siteData.comments.push({ name, relation, text, date: dateStr });
+}
+
+function removeComment(btn, name, textStart) {
+  if (!confirm(lang==='he' ? 'למחוק מסר זה?' : 'Delete this message?')) return;
+  btn.closest('.comment-box').remove();
+  siteData.comments = siteData.comments.filter(
+    c => !(c.name === name && c.text.startsWith(textStart))
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 8: STORIES
+// ══════════════════════════════════════════════════════════════
+
+function addStory() {
+  const author = document.getElementById('storyAuthor').value.trim();
+  const text   = document.getElementById('storyText').value.trim();
+  if (!text) return;
+  const date = new Date().toLocaleDateString('he-IL');
+  renderStoryItem(author, text, date, true);
+  document.getElementById('storyAuthor').value = '';
+  document.getElementById('storyText').value   = '';
+  showToast(lang==='he' ? '✨ הסיפור פורסם' : '✨ Story published');
+}
+
+function renderStoryItem(author, text, date, save=true) {
+  const container = document.getElementById('storiesContainer');
+  const block     = document.createElement('div');
+  block.className = 'story-block';
+  block.style.animation = 'modal-in 0.3s ease';
+  block.innerHTML = `
+    <div class="quote-mark">"</div>
+    <p class="story-text">${text}</p>
+    ${author ? `<div style="margin-top:1rem;font-size:0.85rem;color:var(--gold);font-weight:500;">— ${author}</div>` : ''}
+    <div style="font-size:0.75rem;color:var(--text-light);margin-top:0.25rem;">${date||''}</div>
+    ${currentUser?.role==='admin'
+      ? `<button class="btn btn-danger" style="margin-top:0.5rem;" onclick="removeStory(this, '${author}', '${text.slice(0,20)}')">🗑 מחק</button>`
+      : ''}
+  `;
+  container.appendChild(block);
+  if (save) siteData.stories.push({ author, text, date });
+}
+
+function removeStory(btn, author, textStart) {
+  if (!confirm(lang==='he' ? 'למחוק סיפור זה?' : 'Delete this story?')) return;
+  btn.closest('.story-block').remove();
+  siteData.stories = siteData.stories.filter(
+    s => !(s.author === author && s.text.startsWith(textStart))
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 9: TIMELINE
+// ══════════════════════════════════════════════════════════════
+
+function addTimelineItem() {
+  const year  = prompt(lang==='he' ? 'שנה / תקופה:' : 'Year / Period:') || '2024';
+  const title = prompt(lang==='he' ? 'כותרת האירוע:' : 'Event title:') || '';
+  const desc  = prompt(lang==='he' ? 'תיאור:' : 'Description:') || '';
+  if (!title) return;
+  const tl   = document.getElementById('timelineEl');
+  const item = document.createElement('div');
+  item.className = 'timeline-item';
+  item.innerHTML = `
+    <div class="timeline-dot"></div>
+    <div class="timeline-year">${year}</div>
+    <div class="timeline-title">${title}</div>
+    <div class="timeline-desc">${desc}</div>
+    <button class="btn btn-danger" style="margin-top:0.5rem;"
+      onclick="this.closest('.timeline-item').remove()">🗑 מחק</button>
+  `;
+  tl.appendChild(item);
+  showToast(lang==='he' ? '📅 אירוע נוסף' : '📅 Event added');
+}
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 10: UPLOAD MODAL
+// ══════════════════════════════════════════════════════════════
+
+function adminUploadClick(type) {
+  if (!currentUser || currentUser.role !== 'admin') {
+    showToast(lang==='he' ? 'רק מנהל יכול להוסיף תמונות' : 'Only admin can add photos');
+    return;
+  }
+  openUploadModal(type);
+}
+
+function openUploadModal(type) {
+  if (!currentUser || currentUser.role !== 'admin') {
+    showToast(lang==='he' ? 'יש להתחבר כמנהל' : 'Please login as admin');
+    return;
+  }
+  currentUploadType = type;
+  document.getElementById('videoTitleGroup').style.display = type === 'video' ? 'flex' : 'none';
+  document.getElementById('uploadModal').classList.add('open');
+  updateDrivePanel();
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['url','drive','file'][i] === tab);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+function submitUrl() {
+  const url   = document.getElementById('urlInput').value.trim();
+  if (!url) return;
+  const title = document.getElementById('urlTitle').value.trim()
+    || (lang==='he' ? 'סרטון חדש' : 'New Video');
+  if (currentUploadType === 'photo') {
+    addPhotoToGallery(url, '');
+  } else {
+    addVideoToGrid(title, url);
+  }
+  document.getElementById('urlInput').value  = '';
+  document.getElementById('urlTitle').value  = '';
+  closeModal('uploadModal');
+  showToast(currentUploadType==='photo' ? '📷 תמונה נוספה' : '🎬 סרטון נוסף');
+}
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 11: GALLERY
+// Photos are loaded from Google Drive on page load
+// and displayed as thumbnails in a grid
+// ══════════════════════════════════════════════════════════════
+
+function appendUploadSlot(grid) {
+  // The "+" slot that lets admins upload a new photo
+  const slot = document.createElement('div');
+  slot.className = 'gallery-item upload-slot';
+  slot.onclick = () => adminUploadClick('photo');
+  slot.innerHTML = '<div class="gallery-placeholder"><div class="icon">📷</div><div class="label">הוסף תמונה</div></div>';
+  grid.appendChild(slot);
+}
+
+function addPhotoToGallery(src, caption, save=true) {
+  const grid = document.getElementById('galleryGrid');
+  // Remove upload slot temporarily (will be re-added at end)
+  grid.querySelectorAll('.upload-slot').forEach(el => el.remove());
+
+  const item = document.createElement('div');
+  item.className = 'gallery-item';
+  item.style.position = 'relative';
+
+  // Only admins see the delete button on each photo
+  const deleteBtn = currentUser?.role === 'admin'
+    ? `<button onclick="removePhoto(this, '${src}')"
+         style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.7);
+                color:#fff;border:none;border-radius:50%;width:26px;height:26px;
+                font-size:14px;cursor:pointer;z-index:10;">✕</button>`
+    : '';
+
+  item.innerHTML = `
+    <img class="gallery-img" src="${src}" alt="${caption||''}"
+         onclick="openLightbox(this)"
+         onerror="this.parentElement.style.display='none'">
+    ${deleteBtn}
+  `;
+  grid.appendChild(item);
+
+  // Re-add upload slot for admins
+  if (currentUser?.role === 'admin') appendUploadSlot(grid);
+  if (save) siteData.photos.push({ src, caption: caption||'' });
+}
+
+function removePhoto(btn, src) {
+  // Note: this removes the photo from the gallery display only.
+  // To permanently delete, the admin must also remove it from Google Drive.
+  if (!confirm(lang==='he'
+    ? 'להסיר תמונה מהאתר? (לא נמחקת מ-Drive)'
+    : 'Remove photo from site? (not deleted from Drive)')) return;
+  btn.parentElement.remove();
+  siteData.photos = siteData.photos.filter(p => p.src !== src);
+}
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 12: VIDEO GRID
+// ══════════════════════════════════════════════════════════════
+
+function addVideoToGrid(title, url) {
+  const grid    = document.getElementById('videoGrid');
+  const card    = document.createElement('div');
+  card.className = 'video-card';
+  const isYouTube = url.includes('youtube') || url.includes('youtu.be');
+  const thumbUrl  = isYouTube ? getYouTubeThumbnail(url) : '';
+  card.innerHTML = `
+    <div class="video-thumb"
+         onclick="${url ? `window.open('${url}','_blank')` : `showToast('קישור לא זמין')`}"
+         style="${thumbUrl ? `background-image:url(${thumbUrl});background-size:cover;background-position:center` : ''}">
+      <div class="play-btn"><div class="play-icon"></div></div>
+    </div>
+    <div class="video-info">
+      <div class="video-title">${title}</div>
+      <div class="video-meta">${url}</div>
+    </div>
+    ${currentUser?.role==='admin'
+      ? `<button class="btn btn-danger" style="margin:0.5rem;"
+           onclick="this.closest('.video-card').remove()">🗑</button>`
+      : ''}
+  `;
+  grid.appendChild(card);
+}
+
+function getYouTubeThumbnail(url) {
+  const m = url.match(/(?:v=|youtu\.be\/)([^&\?]+)/);
+  return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : '';
+}
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 13: LOCAL FILE UPLOAD
+// Routes through Drive upload for persistence
+// ══════════════════════════════════════════════════════════════
+
+async function handleLocalFile(files) {
+  // All uploads go to Google Drive for cross-device persistence
+  await handleDriveUpload(files);
+}
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 14: GOOGLE DRIVE UI HELPERS
+// ══════════════════════════════════════════════════════════════
+
+function updateDrivePanel() {
+  const connected = driveConfig.clientId && driveConfig.folderId;
+  document.getElementById('driveNotConnected').style.display = connected ? 'none'  : 'block';
+  document.getElementById('driveConnected').style.display    = connected ? 'block' : 'none';
+  if (connected) {
+    document.getElementById('driveInfo').textContent =
+      `📁 Folder: ${driveConfig.folderId.substring(0,16)}...`;
+  }
+}
+
+function updateDriveStatusBadge() {
+  const badge     = document.getElementById('driveStatusBadge');
+  if (!currentUser) { badge.innerHTML = ''; return; }
+  const connected = driveConfig.clientId && driveConfig.folderId;
+  badge.innerHTML = connected
+    ? `<span class="drive-status connected">☁️ Drive מחובר</span>`
+    : `<span class="drive-status disconnected" onclick="openDriveSetup()">☁️ חבר Drive</span>`;
+}
+
+function openDriveSetup() {
+  closeModal('uploadModal');
+  document.getElementById('driveApiKey').value   = driveConfig.apiKey;
+  document.getElementById('driveFolderId').value = driveConfig.folderId;
+  document.getElementById('driveClientId').value = driveConfig.clientId;
+  document.getElementById('sheetsUrlInput').value = '';
+  document.getElementById('driveSetupModal').classList.add('open');
+}
+
+function saveDriveConfig() {
+  // Save updated credentials to localStorage so they survive page refresh
+  driveConfig.apiKey   = document.getElementById('driveApiKey').value.trim();
+  driveConfig.folderId = document.getElementById('driveFolderId').value.trim();
+  driveConfig.clientId = document.getElementById('driveClientId').value.trim();
+  localStorage.setItem('driveApiKey',   driveConfig.apiKey);
+  localStorage.setItem('driveFolderId', driveConfig.folderId);
+  localStorage.setItem('driveClientId', driveConfig.clientId);
+
+  // Reset OAuth token cache so new credentials take effect immediately
+  _driveAccessToken = null;
+  _tokenClient      = null;
+
+  closeModal('driveSetupModal');
+  updateDriveStatusBadge();
+  showToast(lang==='he' ? '☁️ הגדרות Drive נשמרו' : '☁️ Drive settings saved');
+}
+
+function openDriveGuide() {
+  closeModal('driveSetupModal');
+  document.getElementById('driveGuideModal').classList.add('open');
+}
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 15: GOOGLE OAUTH 2.0 — DRIVE UPLOAD
+//
+// Uses Google Identity Services (GIS) library loaded in <head>
+// Scope: 'drive.file' — can ONLY access files this app created.
+// Cannot read or modify any other Drive files. Safe.
+//
+// Flow:
+//  1. Admin clicks upload
+//  2. requestDriveToken() opens Google sign-in popup (first time only)
+//  3. Google returns a short-lived access token (~1 hour)
+//  4. Token is used to upload file via Drive API v3
+//  5. File is made public so all visitors can view it
+//  6. Gallery reloads to show the new photo
+// ══════════════════════════════════════════════════════════════
+
+let _driveAccessToken = null; // Cached OAuth access token
+let _tokenClient      = null; // GIS token client instance
+
+function getTokenClient() {
+  // Returns existing client or creates a new one
+  if (_tokenClient) return _tokenClient;
+  if (!driveConfig.clientId) {
+    showToast(lang==='he' ? '⚠️ יש להגדיר Client ID תחילה' : '⚠️ Please configure Client ID first');
+    openDriveSetup();
+    return null;
+  }
+  _tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: driveConfig.clientId,
+    scope:     'https://www.googleapis.com/auth/drive.file',
+    callback:  () => {}, // Callback is set dynamically per request
+  });
+  return _tokenClient;
+}
+
+function requestDriveToken(callback) {
+  // Requests an OAuth token, reusing cached token if available
+  const client = getTokenClient();
+  if (!client) return;
+
+  client.callback = (resp) => {
+    if (resp.error) {
+      showToast(lang==='he'
+        ? `❌ שגיאת הרשאה: ${resp.error}`
+        : `❌ Auth error: ${resp.error}`);
+      return;
+    }
+    _driveAccessToken = resp.access_token;
+    callback(_driveAccessToken);
+  };
+
+  if (_driveAccessToken) {
+    // Reuse existing token without showing popup again
+    callback(_driveAccessToken);
+  } else {
+    // Show Google sign-in popup
+    client.requestAccessToken({ prompt: 'consent' });
+  }
+}
+
+async function handleDriveUpload(files) {
+  if (!files || !files[0]) return;
+  const file = files[0];
+
+  if (!driveConfig.clientId) {
+    showToast(lang==='he' ? 'יש להגדיר Client ID תחילה' : 'Please configure Client ID first');
+    openDriveSetup(); return;
+  }
+  if (!driveConfig.folderId) {
+    showToast(lang==='he' ? 'יש להגדיר Folder ID תחילה' : 'Please configure Folder ID first');
+    openDriveSetup(); return;
+  }
+
+  requestDriveToken(async (token) => {
+    const prog = document.getElementById('driveProgress');
+    const bar  = document.getElementById('driveProgressBar');
+    prog.style.display = 'block';
+    bar.style.width    = '10%';
+
+    try {
+      // ── Step 1: Upload file to Drive ──
+      const meta = JSON.stringify({ name: file.name, parents: [driveConfig.folderId] });
+      const body = new FormData();
+      body.append('metadata', new Blob([meta], { type: 'application/json' }));
+      body.append('file', file);
+
+      bar.style.width = '40%';
+
+      const uploadRes = await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name',
+        { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body }
+      );
+
+      bar.style.width = '70%';
+
+      if (!uploadRes.ok) {
+        const errData = await uploadRes.json().catch(() => ({}));
+        // Token expired — clear cache and retry once automatically
+        if (uploadRes.status === 401) {
+          _driveAccessToken = null;
+          prog.style.display = 'none'; bar.style.width = '0%';
+          showToast(lang==='he' ? '🔄 מחדש הרשאה...' : '🔄 Refreshing auth...');
+          setTimeout(() => handleDriveUpload(files), 500);
+          return;
+        }
+        throw new Error(errData.error?.message || `HTTP ${uploadRes.status}`);
+      }
+
+      const uploadData = await uploadRes.json();
+      const fileId     = uploadData.id;
+
+      // ── Step 2: Make file publicly viewable ──
+      // This allows the thumbnail URL to work for all visitors without login
+      await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
+        method:  'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ role: 'reader', type: 'anyone' })
+      });
+
+      bar.style.width = '100%';
+
+      setTimeout(async () => {
+        prog.style.display = 'none';
+        bar.style.width    = '0%';
+
+        if (currentUploadType === 'photo') {
+          // Reload full gallery from Drive to avoid duplicates
+          await loadPhotosFromDriveAuth(token);
+        } else {
+          addVideoToGrid(file.name, `https://drive.google.com/file/d/${fileId}/view`);
+        }
+        closeModal('uploadModal');
+        showToast(lang==='he'
+          ? `☁️ הועלה בהצלחה: ${uploadData.name}`
+          : `☁️ Uploaded: ${uploadData.name}`);
+      }, 400);
+
+    } catch(e) {
+      prog.style.display = 'none';
+      bar.style.width    = '0%';
+      console.error('Drive upload error:', e);
+      showToast(lang==='he' ? `❌ שגיאת העלאה: ${e.message}` : `❌ Upload error: ${e.message}`);
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 16: LOAD PHOTOS FROM GOOGLE DRIVE
+//
+// Two modes:
+//  - Public (no login): uses API key, works for all visitors
+//  - Authenticated: uses OAuth token, used after upload
+// ══════════════════════════════════════════════════════════════
+
+async function loadPhotosFromDrive() {
+  // Called on page load — no authentication needed
+  // Requires the Drive folder to be shared as "Anyone with link can view"
+  const folderId = driveConfig.folderId;
+  if (!folderId) return;
+
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files` +
+      `?q='${folderId}'+in+parents+and+mimeType+contains+'image/'` +
+      `&fields=files(id,name)&orderBy=createdTime+desc&key=${DRIVE_API_KEY}`
+    );
+
+    if (!res.ok) {
+      const err = await res.json();
+      console.warn('Drive public load failed:', err.error?.message,
+        '— Make sure the folder is shared as "Anyone with link"');
+      return;
+    }
+
+    const data = await res.json();
+    if (!data.files || data.files.length === 0) return;
+
+    // Clear gallery before rendering to avoid duplicates
+    const grid = document.getElementById('galleryGrid');
+    if (grid) grid.innerHTML = '';
+    siteData.photos = [];
+
+    data.files.forEach(file => {
+      // Use Drive thumbnail URL — works publicly without login
+      const src = `https://drive.google.com/thumbnail?id=${file.id}&sz=w1200`;
+      addPhotoToGallery(src, file.name, false);
+    });
+
+  } catch(e) {
+    console.warn('Drive load skipped:', e.message);
+  }
+}
+
+async function loadPhotosFromDriveAuth(token) {
+  // Called after upload — uses OAuth token for authenticated listing
+  const folderId = driveConfig.folderId;
+  if (!folderId || !token) return;
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files` +
+      `?q='${folderId}'+in+parents+and+mimeType+contains+'image/'` +
+      `&fields=files(id,name)&orderBy=createdTime+desc`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.files) return;
+
+    // Clear and reload to avoid duplicates
+    const grid = document.getElementById('galleryGrid');
+    if (grid) grid.innerHTML = '';
+    siteData.photos = [];
+
+    data.files.forEach(file => {
+      const src = `https://drive.google.com/thumbnail?id=${file.id}&sz=w1200`;
+      addPhotoToGallery(src, file.name, false);
+    });
+  } catch(e) {
+    console.warn('Authenticated drive load error:', e.message);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 17: BACKUP
+//
+// Downloads a JSON file with all current session data:
+// photo URLs, comments, stories, candles
+// Photos themselves are safely stored in Google Drive.
+// ══════════════════════════════════════════════════════════════
+
+function downloadBackup() {
+  const backup = {
+    exportDate:  new Date().toISOString(),
+    siteVersion: '2.0',
+    note:        'Photos are stored in Google Drive. This file contains URLs and content.',
+    driveFolder: driveConfig.folderId,
+    photos:      siteData.photos,
+    comments:    siteData.comments,
+    stories:     siteData.stories,
+    candles:     candles,
+    videos:      siteData.videos
+  };
+
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `yoav-memorial-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(lang==='he' ? '💾 גיבוי הורד בהצלחה' : '💾 Backup downloaded');
+}
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 18: LIGHTBOX (fullscreen photo viewer)
+// ══════════════════════════════════════════════════════════════
+
+function openLightbox(img) {
+  document.getElementById('lightboxImg').src           = img.src;
+  document.getElementById('lightboxCaption').textContent = img.alt || '';
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 19: TOAST NOTIFICATIONS
+// Small pop-up messages at the bottom of the screen
+// ══════════════════════════════════════════════════════════════
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 20: SMOOTH SCROLL
+// ══════════════════════════════════════════════════════════════
+
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const el = document.querySelector(a.getAttribute('href'));
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 21: INITIALIZATION
+// Runs when the page first loads
+// ══════════════════════════════════════════════════════════════
+
+// Seed initial candles (family members lit at launch)
+['לילך', 'צפריר', 'חברים', 'גולני'].forEach(n => candles.push(n));
+renderCandles();
+
+// Drag & drop support for upload areas
+document.querySelectorAll('.upload-area').forEach(area => {
+  area.addEventListener('dragover',  e => { e.preventDefault(); area.classList.add('drag-over'); });
+  area.addEventListener('dragleave', ()  => area.classList.remove('drag-over'));
+  area.addEventListener('drop', e => {
+    e.preventDefault();
+    area.classList.remove('drag-over');
+    const files = e.dataTransfer.files;
+    if (area.id === 'driveUploadArea') handleDriveUpload(files);
+    else if (area.id === 'localUploadArea') handleLocalFile(files);
+  });
+});
+
+// Close any open modal or lightbox when Escape is pressed
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+    closeLightbox();
+  }
+});
+
+// On page load: fetch photos from Google Drive (public, no login needed)
+window.addEventListener('DOMContentLoaded', async () => {
+  await loadPhotosFromDrive();
+});
+</script>
 
 let driveConfig = {
   apiKey: localStorage.getItem('driveApiKey') || '',
@@ -958,63 +1818,9 @@ let siteData = {
   videos: []     // [{title, url}]
 };
 
-async function saveToSheets() {
-  if (!SHEETS_URL) { console.warn('No SHEETS_URL set'); return; }
-  try {
-    const body = JSON.stringify(siteData);
-    const res = await fetch(SHEETS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: body
-    });
-    const txt = await res.text();
-    let json = {};
-    try { json = JSON.parse(txt); } catch(e) {}
-    if (json.status === 'ok') {
-      showToast('✓ נשמר בהצלחה ב-Sheets');
-    } else if (json.error) {
-      showToast('❌ שגיאה: ' + json.error);
-      console.error('Sheets error:', json.error);
-    } else {
-      showToast('✓ נשמר');
-    }
-  } catch(e) {
-    showToast('❌ שגיאת חיבור: ' + e.message);
-    console.error('Save error:', e);
-  }
-}
-
-async function loadFromSheets(showAlert=false) {
-  if (!SHEETS_URL) { 
-    if(showAlert) alert('No Sheets URL configured');
-    return; 
-  }
-  try {
-    const res = await fetch(SHEETS_URL + '?action=load&t=' + Date.now(), {
-      method: 'GET', redirect: 'follow'
-    });
-    const text = await res.text();
-    let payload;
-    try { payload = JSON.parse(text); } catch(e) { 
-      if(showAlert) alert('Bad response: ' + text.slice(0,100));
-      return; 
-    }
-    if (payload.status === 'empty') {
-      if(showAlert) alert('Sheets is empty - no data saved yet');
-      return;
-    }
-    if (!payload.photos) {
-      if(showAlert) alert('No photos key. Keys: ' + Object.keys(payload).join(', '));
-      return;
-    }
-    siteData = payload;
-    renderAllFromData();
-    if(showAlert) alert('Loaded! Photos: ' + siteData.photos.length);
-  } catch(e) {
-    if(showAlert) alert('Load error: ' + e.message);
-    console.error('Load error:', e);
-  }
-}
+// Sheets not used — photos stored in Google Drive
+function saveToSheets() { /* disabled */ }
+function loadFromSheets() { /* disabled */ }
 
 function renderAllFromData() {
   // Render photos
@@ -1140,7 +1946,6 @@ function lightCandle() {
   candles.push(name);
   siteData.candles = candles;
   renderCandles();
-  saveToSheets();
   document.getElementById('candleName').value = '';
   showToast(lang==='he' ? '🕯️ הנר הודלק — יואב יזכר תמיד' : '🕯️ Candle lit — Yoav will always be remembered');
 }
@@ -1195,7 +2000,6 @@ function renderCommentItem(name, relation, text, dateStr, save=true) {
   container.appendChild(box);
   if (save) {
     siteData.comments.push({name, relation, text, date: dateStr});
-    saveToSheets();
   }
 }
 
@@ -1203,7 +2007,6 @@ function removeComment(btn, name, textStart) {
   if (!confirm(lang==='he' ? 'למחוק מסר זה?' : 'Delete this message?')) return;
   btn.closest('.comment-box').remove();
   siteData.comments = siteData.comments.filter(c => !(c.name === name && c.text.startsWith(textStart)));
-  saveToSheets();
 }
 
 // ══════════════════════════════════
@@ -1237,7 +2040,6 @@ function renderStoryItem(author, text, date, save=true) {
   container.appendChild(block);
   if (save) {
     siteData.stories.push({author, text, date});
-    saveToSheets();
   }
 }
 
@@ -1245,7 +2047,6 @@ function removeStory(btn, author, textStart) {
   if (!confirm(lang==='he' ? 'למחוק סיפור זה?' : 'Delete this story?')) return;
   btn.closest('.story-block').remove();
   siteData.stories = siteData.stories.filter(s => !(s.author === author && s.text.startsWith(textStart)));
-  saveToSheets();
 }
 
 // ══════════════════════════════════
@@ -1335,7 +2136,6 @@ function addPhotoToGallery(src, caption, save=true) {
   }
   if (save) {
     siteData.photos.push({src, caption: caption||''});
-    saveToSheets();
   }
 }
 
@@ -1343,7 +2143,6 @@ function removePhoto(btn, src) {
   if (!confirm(lang==='he' ? 'להסיר תמונה זו?' : 'Remove this photo?')) return;
   btn.parentElement.remove();
   siteData.photos = siteData.photos.filter(p => p.src !== src);
-  saveToSheets();
 }
 
 function addVideoToGrid(title, url) {
