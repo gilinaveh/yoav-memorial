@@ -916,7 +916,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
   <button class="btn btn-sky" onclick="openUploadModal('video')">🎬 <span data-he>סרטון</span><span data-en>Video</span></button>
   <button class="btn btn-outline" onclick="document.querySelectorAll('.admin-only').forEach(el=>el.style.display=el.style.display==='none'?'block':'none')">⚙️ <span data-he>כלי עריכה</span><span data-en>Edit Tools</span></button>
   <button class="btn btn-outline" onclick="openDriveSetup()" style="background:rgba(201,168,76,0.15);border-color:rgba(201,168,76,0.4);color:#E8D5A3;margin-right:8px;">☁️ <span data-he>הגדר Drive</span><span data-en>Setup Drive</span></button>
-  <button class="btn btn-outline" onclick="loadFromSheets(true)" style="background:rgba(39,174,96,0.15);border-color:rgba(39,174,96,0.4);color:#7DCEA0;margin-right:8px;">⬇ <span data-he>טען מ-Sheets</span><span data-en>Load from Sheets</span></button>
+
   <div class="admin-bar-label" id="adminBarLabel"></div>
 </div>
 
@@ -929,12 +929,12 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
 // ══════════════════════════════════
 const USERS = {
   'tzafrir': {
-    pass: 'yoav2005!',
+    pass: 'yoav2024',
     role: 'admin',
     name: 'צפריר'
   },
   'lilach': {
-    pass: 'lilach2005!',
+    pass: 'lilach2024',
     role: 'admin',
     name: 'לילך (אמא)'
   }
@@ -1373,88 +1373,12 @@ function getYouTubeThumbnail(url) {
 }
 
 // ══════════════════════════════════
-// LOCAL FILE UPLOAD — with cloud persistence
+// LOCAL FILE UPLOAD — redirects to Drive upload
 // ══════════════════════════════════
 async function handleLocalFile(files) {
   if (!files || !files[0]) return;
-  const file = files[0];
-
-  // Show progress
-  const prog = document.getElementById('localUploadProgress');
-  const bar = document.getElementById('localUploadBar');
-  prog.style.display = 'block';
-  bar.style.width = '15%';
-
-  try {
-    // Convert to base64
-    const base64 = await new Promise((res, rej) => {
-      const r = new FileReader();
-      r.onload = () => res(r.result); // full data URL
-      r.onerror = () => rej(new Error('Read failed'));
-      r.readAsDataURL(file);
-    });
-
-    bar.style.width = '40%';
-
-    if (currentUploadType === 'photo') {
-      // Store to Anthropic persistent storage
-      const key = 'photo_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
-      await window.storage.set(key, JSON.stringify({ src: base64, caption: file.name, ts: Date.now() }), true);
-      bar.style.width = '80%';
-
-      // Also save key reference to siteData so Sheets knows about it
-      addPhotoToGallery(base64, file.name);
-    } else {
-      addVideoToGrid(file.name, base64);
-    }
-
-    bar.style.width = '100%';
-    setTimeout(() => { prog.style.display = 'none'; bar.style.width = '0%'; }, 500);
-    closeModal('uploadModal');
-    showToast(currentUploadType === 'photo' ? '📷 תמונה נשמרה בענן ✓' : '🎬 סרטון נוסף');
-
-  } catch(e) {
-    prog.style.display = 'none';
-    bar.style.width = '0%';
-    console.error('Upload error:', e);
-    // Fallback: use base64 locally only
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      if (currentUploadType === 'photo') addPhotoToGallery(ev.target.result, file.name);
-      else addVideoToGrid(file.name, ev.target.result);
-      closeModal('uploadModal');
-      showToast(currentUploadType === 'photo' ? '📷 תמונה נוספה (מקומית)' : '🎬 סרטון נוסף');
-    };
-    reader.readAsDataURL(file);
-  }
-}
-
-// ══════════════════════════════════
-// LOAD PHOTOS FROM ANTHROPIC STORAGE (cross-device)
-// ══════════════════════════════════
-async function loadPhotosFromStorage() {
-  try {
-    const result = await window.storage.list('photo_', true);
-    if (!result || !result.keys || result.keys.length === 0) return;
-
-    // Get already-loaded srcs to avoid duplicates
-    const loadedSrcs = new Set(siteData.photos.map(p => p.src));
-
-    for (const key of result.keys) {
-      try {
-        const item = await window.storage.get(key, true);
-        if (item && item.value) {
-          const data = JSON.parse(item.value);
-          if (data.src && !loadedSrcs.has(data.src)) {
-            addPhotoToGallery(data.src, data.caption || '', false);
-            loadedSrcs.add(data.src);
-          }
-        }
-      } catch(e) { /* skip bad entries */ }
-    }
-  } catch(e) {
-    console.log('Storage load skipped:', e.message);
-  }
+  // Route local file uploads through Drive for persistence
+  await handleDriveUpload(files);
 }
 
 // ══════════════════════════════════
