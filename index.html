@@ -974,8 +974,8 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
 const USERS = {
   // Admin accounts — can upload photos and delete content
   // Format: 'username': { pass: 'password', role: 'admin', name: 'Display Name' }
-  'tzafrir': { pass: 'yoav2024!', role: 'admin', name: 'צפריר' },
-  'lilach':  { pass: 'lilach2024!', role: 'admin', name: 'לילך (אמא)' }
+  'tzafrir': { pass: 'Yoav2024!', role: 'admin', name: 'צפריר' },
+  'lilach':  { pass: 'Lilach2024!', role: 'admin', name: 'לילך (אמא)' }
 };
 
 // Google Drive configuration
@@ -1537,6 +1537,25 @@ async function handleDriveUpload(files) {
   if (!files || !files[0]) return;
   const file = files[0];
 
+  // ── Guard: images only ──
+  if (!file.type.startsWith('image/')) {
+    showToast(lang==='he'
+      ? '❌ ניתן להעלות תמונות בלבד (jpg, png, heic...)'
+      : '❌ Images only (jpg, png, heic...)');
+    return;
+  }
+
+  // ── Guard: 25MB max per photo ──
+  const MAX_MB = 25;
+  const MAX_BYTES = MAX_MB * 1024 * 1024;
+  if (file.size > MAX_BYTES) {
+    const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+    showToast(lang==='he'
+      ? `❌ הקובץ גדול מדי (${sizeMB}MB). מקסימום ${MAX_MB}MB לתמונה`
+      : `❌ File too large (${sizeMB}MB). Max ${MAX_MB}MB per photo`);
+    return;
+  }
+
   if (!driveConfig.clientId) {
     showToast(lang==='he' ? 'יש להגדיר Client ID תחילה' : 'Please configure Client ID first');
     openDriveSetup(); return;
@@ -1660,6 +1679,13 @@ async function loadPhotosFromDrive() {
       const src = `https://drive.google.com/thumbnail?id=${file.id}&sz=w1200`;
       addPhotoToGallery(src, file.name, false);
     });
+
+    // Warn admins if folder is getting large
+    if (currentUser?.role === 'admin' && data.files.length > 200) {
+      showToast(lang==='he'
+        ? `⚠️ ${data.files.length} תמונות בתיקיה — שקול לנקות ישנות`
+        : `⚠️ ${data.files.length} photos in folder — consider cleaning old ones`);
+    }
 
   } catch(e) {
     console.warn('Drive load skipped:', e.message);
