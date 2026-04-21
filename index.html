@@ -584,7 +584,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
   <p class="section-subtitle"><span data-he>כל נר — לב שזוכר</span><span data-en>Every candle — a heart that remembers</span></p>
   <div class="divider"></div>
   <div class="candle-section">
-    <div class="candle-count" id="candleCount">4</div>
+    <div class="candle-count" id="candleCount">0</div>
     <div class="candle-label"><span data-he>נרות הודלקו לזכרו</span><span data-en>candles lit in his memory</span></div>
     <div class="candles-row" id="candlesRow"></div>
     <div style="display:flex;gap:1rem;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:1rem;">
@@ -924,6 +924,47 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<!-- Firebase (module) — initializes Firestore and exposes window.fbDB bridge -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
+  import {
+    getFirestore, collection, addDoc, deleteDoc, doc,
+    onSnapshot, orderBy, query, serverTimestamp
+  } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDUITgvQ95rsJzD_7Y0Cz6BJwcMAGg1zyA",
+    authDomain: "yoav-memorial-7a8a3.firebaseapp.com",
+    projectId: "yoav-memorial-7a8a3",
+    storageBucket: "yoav-memorial-7a8a3.firebasestorage.app",
+    messagingSenderId: "654575963485",
+    appId: "1:654575963485:web:05c9ae07f4c10b4881ecb4"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  const candlesQ  = query(collection(db, 'candles'),  orderBy('createdAt', 'asc'));
+  const commentsQ = query(collection(db, 'comments'), orderBy('createdAt', 'asc'));
+  const storiesQ  = query(collection(db, 'stories'),  orderBy('createdAt', 'asc'));
+
+  const snap = s => s.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  window.fbDB = {
+    onCandles : cb => onSnapshot(candlesQ,  s => cb(snap(s)), e => console.error('candles listener:', e)),
+    onComments: cb => onSnapshot(commentsQ, s => cb(snap(s)), e => console.error('comments listener:', e)),
+    onStories : cb => onSnapshot(storiesQ,  s => cb(snap(s)), e => console.error('stories listener:', e)),
+
+    addCandle : name => addDoc(collection(db, 'candles'),  { name, createdAt: serverTimestamp() }),
+    addComment: data => addDoc(collection(db, 'comments'), { ...data, createdAt: serverTimestamp() }),
+    addStory  : data => addDoc(collection(db, 'stories'),  { ...data, createdAt: serverTimestamp() }),
+
+    deleteCandle : id => deleteDoc(doc(db, 'candles',  id)),
+    deleteComment: id => deleteDoc(doc(db, 'comments', id)),
+    deleteStory  : id => deleteDoc(doc(db, 'stories',  id)),
+  };
+</script>
+
 <script>
 /*
  * ════════════════════════════════════════════════════════════════
@@ -937,9 +978,8 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
  *  • Admins upload photos via Google OAuth 2.0 (GIS library)
  *    — a Google sign-in popup appears, authorizes upload to Drive
  *    — each uploaded file is made public so anyone can view it
- *  • Comments, stories and candles are stored in browser memory only
- *    (they show for the current session — a future improvement could
- *     persist them via a backend service)
+ *  • Comments, stories and candles persist in Firebase Firestore.
+ *    Live updates stream to every open tab via onSnapshot listeners.
  *
  *  KEY CREDENTIALS (baked in for convenience):
  *  ─────────────────────────────────────────
@@ -999,18 +1039,19 @@ let driveConfig = {
 
 let currentUser = null;   // Logged-in admin user object, or null
 let lang = 'he';          // Current language: 'he' (Hebrew) or 'en' (English)
-let candles = [];         // Array of names who lit candles
 let currentUploadType = 'photo'; // 'photo' or 'video'
 let activeTab = 'url';    // Current tab in upload modal
 
-// In-memory store for content added this session
-// Note: This resets on page refresh — only photos persist via Drive
+// Populated by Firestore onSnapshot listeners. Each entry includes a Firestore
+// doc `id` used for deletes.
+let candlesData  = []; // [{ id, name, createdAt }]
+let commentsData = []; // [{ id, name, relation, text, dateStr, createdAt }]
+let storiesData  = []; // [{ id, author, text, dateStr, createdAt }]
+
+// Photos and videos still live in session memory (photos back by Drive)
 let siteData = {
-  photos:   [], // [{ src, caption }]
-  stories:  [], // [{ author, text, date }]
-  candles:  [], // ['name', 'name', ...]
-  comments: [], // [{ name, relation, text, date }]
-  videos:   []  // [{ title, url }]
+  photos: [], // [{ src, caption }]
+  videos: []  // [{ title, url }]
 };
 
 // Avatar color palette for comment display
@@ -1080,6 +1121,7 @@ function doLogin() {
   document.getElementById('loginUser').value = '';
   document.getElementById('loginPass').value = '';
   applyAuth();
+  renderComments(); renderStories(); // refresh delete buttons
   showToast(`ברוך הבא, ${user.name}! 👋`);
 }
 
@@ -1089,6 +1131,7 @@ function logout() {
   document.getElementById('adminBar').classList.remove('visible');
   document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
   document.getElementById('loginBtn').style.display = '';
+  renderComments(); renderStories(); // hide delete buttons
   showToast(lang==='he' ? 'התנתקת בהצלחה' : 'Logged out successfully');
 }
 
@@ -1120,25 +1163,28 @@ function applyAuth() {
 
 // ══════════════════════════════════════════════════════════════
 // SECTION 6: CANDLES
-// Memorial candles — stored in memory for the session
+// Persisted in Firestore `candles` collection; live-synced via onSnapshot.
 // ══════════════════════════════════════════════════════════════
 
-function lightCandle() {
+async function lightCandle() {
   const name = document.getElementById('candleName').value.trim()
     || (lang==='he' ? 'אנונימי' : 'Anonymous');
-  candles.push(name);
-  siteData.candles = candles;
-  renderCandles();
-  document.getElementById('candleName').value = '';
-  showToast(lang==='he' ? '🕯️ הנר הודלק — יואב יזכר תמיד' : '🕯️ Candle lit — Yoav will always be remembered');
+  try {
+    await window.fbDB.addCandle(name);
+    document.getElementById('candleName').value = '';
+    showToast(lang==='he' ? '🕯️ הנר הודלק — יואב יזכר תמיד' : '🕯️ Candle lit — Yoav will always be remembered');
+  } catch (e) {
+    console.error('lightCandle failed:', e);
+    showToast(lang==='he' ? 'שגיאה בהדלקת נר' : 'Error lighting candle');
+  }
 }
 
 function renderCandles() {
-  document.getElementById('candleCount').textContent = candles.length;
+  document.getElementById('candleCount').textContent = candlesData.length;
   const row = document.getElementById('candlesRow');
   row.innerHTML = '';
   // Show only the last 15 candles to avoid overflow
-  candles.slice(-15).forEach(name => {
+  candlesData.slice(-15).forEach(({ name }) => {
     const c = document.createElement('div');
     c.className = 'candle';
     c.style = `--f:${1.2+Math.random()*0.8}s;--fd:${Math.random()}s`;
@@ -1153,11 +1199,12 @@ function renderCandles() {
 
 // ══════════════════════════════════════════════════════════════
 // SECTION 7: COMMENTS / TRIBUTES
-// Comments are shown for the session — they reset on refresh
-// Future improvement: store in a backend (Firebase, Supabase, etc.)
+// Persisted in Firestore `comments`; live-synced via onSnapshot.
+// The hardcoded Lilach tribute in HTML has no data-doc-id and is
+// therefore preserved across re-renders.
 // ══════════════════════════════════════════════════════════════
 
-function submitComment() {
+async function submitComment() {
   const name     = document.getElementById('commentName').value.trim();
   const relation = document.getElementById('commentRelation').value.trim();
   const text     = document.getElementById('commentText').value.trim();
@@ -1168,84 +1215,107 @@ function submitComment() {
   }
 
   const dateStr = new Date().toLocaleDateString('he-IL');
-  renderCommentItem(name, relation, text, dateStr, true);
-  document.getElementById('commentName').value = '';
-  document.getElementById('commentRelation').value = '';
-  document.getElementById('commentText').value = '';
-  showToast(lang==='he' ? '💙 המסר נשמר — תודה שזכרת את יואב' : '💙 Message saved — thank you for remembering Yoav');
+  try {
+    await window.fbDB.addComment({ name, relation, text, dateStr });
+    document.getElementById('commentName').value = '';
+    document.getElementById('commentRelation').value = '';
+    document.getElementById('commentText').value = '';
+    showToast(lang==='he' ? '💙 המסר נשמר — תודה שזכרת את יואב' : '💙 Message saved — thank you for remembering Yoav');
+  } catch (e) {
+    console.error('submitComment failed:', e);
+    showToast(lang==='he' ? 'שגיאה בשמירת המסר' : 'Error saving message');
+  }
 }
 
-function renderCommentItem(name, relation, text, dateStr, save=true) {
+function renderComments() {
   const container = document.getElementById('commentsContainer');
-  const colorIdx  = Math.floor(Math.random()*4);
-  const initial   = name.charAt(0);
-  const box       = document.createElement('div');
-  box.className   = 'comment-box';
-  box.style.animation = 'modal-in 0.3s ease';
-  box.innerHTML = `
-    <div class="comment-header">
-      <div class="avatar" style="background:${avatarColors[colorIdx]};color:${avatarTextColors[colorIdx]};">${initial}</div>
-      <div class="comment-meta">
-        <div class="comment-author">${name}${relation ? ' ('+relation+')' : ''}</div>
-        <div class="comment-date">${dateStr}</div>
+  // Remove only previously-rendered Firestore comments; keep static ones.
+  container.querySelectorAll('.comment-box[data-doc-id]').forEach(el => el.remove());
+
+  commentsData.forEach(({ id, name, relation, text, dateStr }) => {
+    const colorIdx = Math.floor(Math.random()*4);
+    const initial  = (name || '?').charAt(0);
+    const box      = document.createElement('div');
+    box.className  = 'comment-box';
+    box.dataset.docId = id;
+    box.innerHTML = `
+      <div class="comment-header">
+        <div class="avatar" style="background:${avatarColors[colorIdx]};color:${avatarTextColors[colorIdx]};">${initial}</div>
+        <div class="comment-meta">
+          <div class="comment-author">${name}${relation ? ' ('+relation+')' : ''}</div>
+          <div class="comment-date">${dateStr || ''}</div>
+        </div>
+        ${currentUser?.role==='admin'
+          ? `<button class="btn btn-danger" onclick="removeComment('${id}')">🗑</button>`
+          : ''}
       </div>
-      ${currentUser?.role==='admin'
-        ? `<button class="btn btn-danger" onclick="removeComment(this, '${name}', '${text.slice(0,20)}')">🗑</button>`
-        : ''}
-    </div>
-    <div class="comment-text">${text}</div>
-  `;
-  container.appendChild(box);
-  if (save) siteData.comments.push({ name, relation, text, date: dateStr });
+      <div class="comment-text">${text}</div>
+    `;
+    container.appendChild(box);
+  });
 }
 
-function removeComment(btn, name, textStart) {
+async function removeComment(id) {
   if (!confirm(lang==='he' ? 'למחוק מסר זה?' : 'Delete this message?')) return;
-  btn.closest('.comment-box').remove();
-  siteData.comments = siteData.comments.filter(
-    c => !(c.name === name && c.text.startsWith(textStart))
-  );
+  try {
+    await window.fbDB.deleteComment(id);
+  } catch (e) {
+    console.error('removeComment failed:', e);
+    showToast(lang==='he' ? 'שגיאה במחיקה' : 'Error deleting message');
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
 // SECTION 8: STORIES
+// Persisted in Firestore `stories`; live-synced via onSnapshot.
+// The hardcoded Lilach story has no data-doc-id and stays untouched.
 // ══════════════════════════════════════════════════════════════
 
-function addStory() {
+async function addStory() {
   const author = document.getElementById('storyAuthor').value.trim();
   const text   = document.getElementById('storyText').value.trim();
   if (!text) return;
-  const date = new Date().toLocaleDateString('he-IL');
-  renderStoryItem(author, text, date, true);
-  document.getElementById('storyAuthor').value = '';
-  document.getElementById('storyText').value   = '';
-  showToast(lang==='he' ? '✨ הסיפור פורסם' : '✨ Story published');
+  const dateStr = new Date().toLocaleDateString('he-IL');
+  try {
+    await window.fbDB.addStory({ author, text, dateStr });
+    document.getElementById('storyAuthor').value = '';
+    document.getElementById('storyText').value   = '';
+    showToast(lang==='he' ? '✨ הסיפור פורסם' : '✨ Story published');
+  } catch (e) {
+    console.error('addStory failed:', e);
+    showToast(lang==='he' ? 'שגיאה בפרסום הסיפור' : 'Error publishing story');
+  }
 }
 
-function renderStoryItem(author, text, date, save=true) {
+function renderStories() {
   const container = document.getElementById('storiesContainer');
-  const block     = document.createElement('div');
-  block.className = 'story-block';
-  block.style.animation = 'modal-in 0.3s ease';
-  block.innerHTML = `
-    <div class="quote-mark">"</div>
-    <p class="story-text">${text}</p>
-    ${author ? `<div style="margin-top:1rem;font-size:0.85rem;color:var(--gold);font-weight:500;">— ${author}</div>` : ''}
-    <div style="font-size:0.75rem;color:var(--text-light);margin-top:0.25rem;">${date||''}</div>
-    ${currentUser?.role==='admin'
-      ? `<button class="btn btn-danger" style="margin-top:0.5rem;" onclick="removeStory(this, '${author}', '${text.slice(0,20)}')">🗑 מחק</button>`
-      : ''}
-  `;
-  container.appendChild(block);
-  if (save) siteData.stories.push({ author, text, date });
+  container.querySelectorAll('.story-block[data-doc-id]').forEach(el => el.remove());
+
+  storiesData.forEach(({ id, author, text, dateStr }) => {
+    const block = document.createElement('div');
+    block.className = 'story-block';
+    block.dataset.docId = id;
+    block.innerHTML = `
+      <div class="quote-mark">"</div>
+      <p class="story-text">${text}</p>
+      ${author ? `<div style="margin-top:1rem;font-size:0.85rem;color:var(--gold);font-weight:500;">— ${author}</div>` : ''}
+      <div style="font-size:0.75rem;color:var(--text-light);margin-top:0.25rem;">${dateStr||''}</div>
+      ${currentUser?.role==='admin'
+        ? `<button class="btn btn-danger" style="margin-top:0.5rem;" onclick="removeStory('${id}')">🗑 מחק</button>`
+        : ''}
+    `;
+    container.appendChild(block);
+  });
 }
 
-function removeStory(btn, author, textStart) {
+async function removeStory(id) {
   if (!confirm(lang==='he' ? 'למחוק סיפור זה?' : 'Delete this story?')) return;
-  btn.closest('.story-block').remove();
-  siteData.stories = siteData.stories.filter(
-    s => !(s.author === author && s.text.startsWith(textStart))
-  );
+  try {
+    await window.fbDB.deleteStory(id);
+  } catch (e) {
+    console.error('removeStory failed:', e);
+    showToast(lang==='he' ? 'שגיאה במחיקה' : 'Error deleting story');
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1738,13 +1808,13 @@ async function loadPhotosFromDriveAuth(token) {
 function downloadBackup() {
   const backup = {
     exportDate:  new Date().toISOString(),
-    siteVersion: '2.0',
-    note:        'Photos are stored in Google Drive. This file contains URLs and content.',
+    siteVersion: '2.1',
+    note:        'Photos live in Google Drive; comments/stories/candles live in Firestore. This file is a snapshot.',
     driveFolder: driveConfig.folderId,
     photos:      siteData.photos,
-    comments:    siteData.comments,
-    stories:     siteData.stories,
-    candles:     candles,
+    comments:    commentsData,
+    stories:     storiesData,
+    candles:     candlesData.map(c => c.name),
     videos:      siteData.videos
   };
 
@@ -1801,10 +1871,6 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
 // Runs when the page first loads
 // ══════════════════════════════════════════════════════════════
 
-// Seed initial candles (family members lit at launch)
-['לילך', 'צפריר', 'חברים', 'גולני'].forEach(n => candles.push(n));
-renderCandles();
-
 // Drag & drop support for upload areas
 document.querySelectorAll('.upload-area').forEach(area => {
   area.addEventListener('dragover',  e => { e.preventDefault(); area.classList.add('drag-over'); });
@@ -1826,8 +1892,18 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// On page load: fetch photos from Google Drive (public, no login needed)
+// On page load: subscribe to Firestore + fetch photos from Google Drive
 window.addEventListener('DOMContentLoaded', async () => {
+  // Firestore live subscriptions — each snapshot repopulates the arrays
+  // and re-renders the affected section.
+  if (window.fbDB) {
+    window.fbDB.onCandles(data  => { candlesData  = data; renderCandles();  });
+    window.fbDB.onComments(data => { commentsData = data; renderComments(); });
+    window.fbDB.onStories(data  => { storiesData  = data; renderStories();  });
+  } else {
+    console.error('Firebase bridge (window.fbDB) not initialized — check the module script.');
+  }
+
   await loadPhotosFromDrive();
 });
 </script>
