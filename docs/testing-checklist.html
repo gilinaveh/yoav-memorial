@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yoav Agmon Memorial - Testing Checklist</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700&family=Frank+Ruhl+Libre:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --deep-blue: #0D1B2A;
+            --gold: #C9A84C;
+            --gold-light: #E8D5A3;
+            --sky: #4A7FA5;
+            --sky-light: #A8C5DA;
+            --white: #FDFAF4;
+            --navy-mid: #1E2D45;
+            --success: #27AE60;
+            --danger: #E74C3C;
+        }
+
+        body {
+            font-family: 'Heebo', sans-serif;
+            background-color: var(--deep-blue);
+            color: var(--white);
+            margin: 0;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid rgba(201, 168, 76, 0.3);
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-family: 'Frank Ruhl Libre', serif;
+            color: var(--gold);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--sky);
+            font-style: italic;
+        }
+
+        .meta-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(201, 168, 76, 0.2);
+            border-radius: 12px;
+            padding: 15px 25px;
+            margin-bottom: 30px;
+        }
+
+        .progress-info {
+            color: var(--sky-light);
+            font-size: 0.95rem;
+        }
+
+        .progress-count {
+            color: var(--gold);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .reset-btn {
+            background: transparent;
+            color: var(--sky-light);
+            border: 1px solid rgba(201, 168, 76, 0.3);
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Heebo', sans-serif;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .reset-btn:hover {
+            background: rgba(201, 168, 76, 0.1);
+            color: var(--gold-light);
+        }
+
+        .test-url {
+            background: rgba(74, 127, 165, 0.1);
+            border: 1px solid rgba(74, 127, 165, 0.3);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .test-url a {
+            color: var(--gold-light);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.05rem;
+        }
+
+        .test-url a:hover {
+            color: var(--gold);
+            text-decoration: underline;
+        }
+
+        .phase {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(201, 168, 76, 0.1);
+        }
+
+        .phase-title {
+            font-family: 'Frank Ruhl Libre', serif;
+            color: var(--gold-light);
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .phase-desc {
+            color: var(--sky-light);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .task-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--gold);
+            cursor: pointer;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-content strong {
+            display: block;
+            color: var(--white);
+            margin-bottom: 6px;
+            font-size: 1rem;
+        }
+
+        .task-content .steps {
+            font-size: 0.9rem;
+            color: var(--sky-light);
+            margin-bottom: 6px;
+        }
+
+        .task-content .expected {
+            font-size: 0.85rem;
+            color: #8BC9A3;
+        }
+
+        .task-content .expected::before {
+            content: "✓ Expected: ";
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .checked .task-content strong {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+
+        .checked .task-content .steps,
+        .checked .task-content .expected {
+            opacity: 0.4;
+        }
+
+        .priority-critical {
+            color: var(--danger);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-left: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .notes-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+            border: 1px solid rgba(201, 168, 76, 0.1);
+        }
+
+        .notes-section h2 {
+            font-family: 'Frank Ruhl Libre', serif;
+            color: var(--gold-light);
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            background: rgba(13, 27, 42, 0.6);
+            border: 1px solid rgba(201, 168, 76, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            color: var(--white);
+            font-family: 'Heebo', sans-serif;
+            font-size: 0.95rem;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.8rem;
+            color: var(--sky);
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold-light), var(--gold));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Testing Checklist</h1>
+        <p class="subtitle">Post-deployment verification for Yoav's memorial site</p>
+    </header>
+
+    <div class="meta-bar">
+        <div>
+            <div class="progress-info">Progress: <span class="progress-count"><span id="doneCount">0</span> / <span id="totalCount">0</span></span></div>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+        <button class="reset-btn" onclick="resetAll()">Reset All</button>
+    </div>
+
+    <div class="test-url">
+        🌐 Testing site: <a href="https://gilinaveh.github.io/yoav-memorial/" target="_blank">https://gilinaveh.github.io/yoav-memorial/</a>
+    </div>
+
+    <div class="phase">
+        <div class="phase-title">🔎 Phase 1: Smoke Test</div>
+        <div class="phase-desc">Does the page even load? Basic sanity checks before digging deeper.</div>
+        <ul class="task-list">
+            <li class="task-item">
+                <input type="checkbox" id="t1">
+                <div class="task-content">
+                    <strong>Site loads without errors <em class="priority-critical">Critical</em></strong>
+                    <div class="steps">Open the site URL. Open DevTools → Console tab <em>before</em> clicking anything.</div>
+                    <div class="expected">Page renders fully. Hebrew title, navigation, and star background all visible. No red errors in the Console.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t2">
+                <div class="task-content">
+                    <strong>Hebrew/English toggle works</strong>
+                    <div class="steps">Click the "EN" button in the top nav. Then click "עב" to switch back.</div>
+                    <div class="expected">Text switches between Hebrew (RTL) and English (LTR). Layout mirrors correctly.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t3">
+                <div class="task-content">
+                    <strong>Photos load from Google Drive</strong>
+                    <div class="steps">Scroll to the photo gallery section (תמונות).</div>
+                    <div class="expected">Photos appear within a few seconds. No "Drive public load failed" error in console.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t4">
+                <div class="task-content">
+                    <strong>Navigation anchors work</strong>
+                    <div class="steps">Click each nav link: סיפורים, נרות זיכרון, תגובות, תמונות, אודות.</div>
+                    <div class="expected">Page scrolls smoothly to each section.</div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase">
+        <div class="phase-title">🕯️ Phase 2: Candles (Firebase)</div>
+        <div class="phase-desc">Testing the real-time candle-lighting feature — the core of what we just migrated.</div>
+        <ul class="task-list">
+            <li class="task-item">
+                <input type="checkbox" id="t5">
+                <div class="task-content">
+                    <strong>Light a candle — it appears immediately <em class="priority-critical">Critical</em></strong>
+                    <div class="steps">Scroll to נרות זיכרון. Enter a test name like "TestCandle1" and submit.</div>
+                    <div class="expected">The candle appears in the candles row within 1-2 seconds. Count goes up by 1.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t6">
+                <div class="task-content">
+                    <strong>Candle persists after refresh <em class="priority-critical">Critical</em></strong>
+                    <div class="steps">Refresh the page (Cmd+R). Scroll back to the candles section.</div>
+                    <div class="expected">"TestCandle1" is still there. Count matches what you had before refresh.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t7">
+                <div class="task-content">
+                    <strong>Candle appears in Firebase console</strong>
+                    <div class="steps">Open Firebase console → Firestore Database → Data tab → candles collection.</div>
+                    <div class="expected">A document with name "TestCandle1" and a createdAt timestamp exists.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t8">
+                <div class="task-content">
+                    <strong>Real-time sync between two windows</strong>
+                    <div class="steps">Open the site in two browser windows side-by-side (use Incognito for one). Light a candle "SyncTest" in window A.</div>
+                    <div class="expected">Candle appears in window B within 2-3 seconds WITHOUT refreshing window B.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t9">
+                <div class="task-content">
+                    <strong>Empty/invalid candle is rejected</strong>
+                    <div class="steps">Try lighting a candle with an empty name (just click submit without typing).</div>
+                    <div class="expected">Nothing is saved. Either a warning appears or the submit button does nothing.</div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase">
+        <div class="phase-title">💬 Phase 3: Comments (Firebase)</div>
+        <div class="phase-desc">Verifying comments also save to Firestore correctly.</div>
+        <ul class="task-list">
+            <li class="task-item">
+                <input type="checkbox" id="t10">
+                <div class="task-content">
+                    <strong>Post a test comment</strong>
+                    <div class="steps">Scroll to תגובות. Fill in name "TestUser", relation "Friend", and a short message "Testing comment system". Submit.</div>
+                    <div class="expected">Comment appears at the top of the list within 1-2 seconds.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t11">
+                <div class="task-content">
+                    <strong>Comment persists after refresh</strong>
+                    <div class="steps">Refresh the page. Scroll to comments.</div>
+                    <div class="expected">Your test comment is still there with name, relation, and text intact.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t12">
+                <div class="task-content">
+                    <strong>Comment appears in Firebase console</strong>
+                    <div class="steps">Firebase console → Firestore → comments collection.</div>
+                    <div class="expected">Document exists with name, relation, text, and createdAt fields.</div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase">
+        <div class="phase-title">📖 Phase 4: Stories (Firebase)</div>
+        <div class="phase-desc">Final Firebase collection to verify.</div>
+        <ul class="task-list">
+            <li class="task-item">
+                <input type="checkbox" id="t13">
+                <div class="task-content">
+                    <strong>Post a test story</strong>
+                    <div class="steps">Scroll to סיפורים. Fill in author "TestAuthor" and a story "This is a test story about a special memory." Submit.</div>
+                    <div class="expected">Story appears in the stories section within 1-2 seconds.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t14">
+                <div class="task-content">
+                    <strong>Story persists after refresh</strong>
+                    <div class="steps">Refresh the page. Scroll to stories.</div>
+                    <div class="expected">Your test story is still there.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t15">
+                <div class="task-content">
+                    <strong>Story appears in Firebase console</strong>
+                    <div class="steps">Firebase console → Firestore → stories collection.</div>
+                    <div class="expected">Document exists with author, text, and createdAt fields.</div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase">
+        <div class="phase-title">📱 Phase 5: Mobile & Browser Compatibility</div>
+        <div class="phase-desc">Most visitors will be on their phones. Verify the site works there too.</div>
+        <ul class="task-list">
+            <li class="task-item">
+                <input type="checkbox" id="t16">
+                <div class="task-content">
+                    <strong>Test on iPhone Safari</strong>
+                    <div class="steps">Open the site URL on your phone. Try lighting a candle.</div>
+                    <div class="expected">Site is readable, responsive, and candle saves successfully.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t17">
+                <div class="task-content">
+                    <strong>Test on Android Chrome (if available)</strong>
+                    <div class="steps">Ask someone with an Android device to open the site.</div>
+                    <div class="expected">Same as iPhone — readable, responsive, candles save.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t18">
+                <div class="task-content">
+                    <strong>Test on another desktop browser</strong>
+                    <div class="steps">Open the site in Firefox or Safari (whichever you don't normally use).</div>
+                    <div class="expected">Site renders correctly. Candles/comments/stories work.</div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase">
+        <div class="phase-title">🧹 Phase 6: Cleanup After Testing</div>
+        <div class="phase-desc">Remove test data so real visitors don't see it.</div>
+        <ul class="task-list">
+            <li class="task-item">
+                <input type="checkbox" id="t19">
+                <div class="task-content">
+                    <strong>Delete test candles from Firestore</strong>
+                    <div class="steps">Firebase console → Firestore → candles → click each test doc → three-dot menu → Delete document.</div>
+                    <div class="expected">TestCandle1, SyncTest, and any other test entries are gone.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t20">
+                <div class="task-content">
+                    <strong>Delete test comments from Firestore</strong>
+                    <div class="steps">Same process, but in the comments collection.</div>
+                    <div class="expected">Test comments removed.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t21">
+                <div class="task-content">
+                    <strong>Delete test stories from Firestore</strong>
+                    <div class="steps">Same process, but in the stories collection.</div>
+                    <div class="expected">Test stories removed.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t22">
+                <div class="task-content">
+                    <strong>Re-add original 4 candles</strong>
+                    <div class="steps">Light 4 candles with the original names that were removed during migration: ילד, צפריר, חברים, גולני (or the ones that were there before).</div>
+                    <div class="expected">All 4 appear in the candles row and in Firestore.</div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="notes-section">
+        <h2>📝 Issues & Notes</h2>
+        <textarea id="notes" placeholder="Jot down anything unexpected, bugs to fix, or follow-up items..."></textarea>
+    </div>
+
+    <footer>
+        <p>Progress is saved in your browser. Works offline.</p>
+    </footer>
+</div>
+
+<script>
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    const notesArea = document.getElementById('notes');
+    const doneCountEl = document.getElementById('doneCount');
+    const totalCountEl = document.getElementById('totalCount');
+    const progressFill = document.getElementById('progressFill');
+
+    totalCountEl.textContent = checkboxes.length;
+
+    function updateProgress() {
+        const checked = document.querySelectorAll('input[type="checkbox"]:checked').length;
+        doneCountEl.textContent = checked;
+        progressFill.style.width = (checked / checkboxes.length * 100) + '%';
+    }
+
+    // Load saved states
+    checkboxes.forEach(cb => {
+        const savedState = localStorage.getItem('test-' + cb.id);
+        if (savedState === 'true') {
+            cb.checked = true;
+            cb.closest('.task-item').classList.add('checked');
+        }
+
+        cb.addEventListener('change', () => {
+            localStorage.setItem('test-' + cb.id, cb.checked);
+            if (cb.checked) {
+                cb.closest('.task-item').classList.add('checked');
+            } else {
+                cb.closest('.task-item').classList.remove('checked');
+            }
+            updateProgress();
+        });
+    });
+
+    // Load saved notes
+    const savedNotes = localStorage.getItem('test-notes');
+    if (savedNotes) notesArea.value = savedNotes;
+    notesArea.addEventListener('input', () => {
+        localStorage.setItem('test-notes', notesArea.value);
+    });
+
+    function resetAll() {
+        if (!confirm('Reset all checkboxes and notes? This cannot be undone.')) return;
+        checkboxes.forEach(cb => {
+            cb.checked = false;
+            cb.closest('.task-item').classList.remove('checked');
+            localStorage.removeItem('test-' + cb.id);
+        });
+        notesArea.value = '';
+        localStorage.removeItem('test-notes');
+        updateProgress();
+    }
+
+    updateProgress();
+</script>
+
+</body>
+</html>
