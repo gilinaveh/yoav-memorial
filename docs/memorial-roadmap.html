@@ -1,0 +1,259 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yoav Agmon Memorial - Roadmap</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700&family=Frank+Ruhl+Libre:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --deep-blue: #0D1B2A;
+            --gold: #C9A84C;
+            --gold-light: #E8D5A3;
+            --sky: #4A7FA5;
+            --white: #FDFAF4;
+            --navy-mid: #1E2D45;
+        }
+
+        body {
+            font-family: 'Heebo', sans-serif;
+            background-color: var(--deep-blue);
+            color: var(--white);
+            margin: 0;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            border-bottom: 1px solid rgba(201, 168, 76, 0.3);
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-family: 'Frank Ruhl Libre', serif;
+            color: var(--gold);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--sky);
+            font-style: italic;
+        }
+
+        .phase {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(201, 168, 76, 0.1);
+        }
+
+        .phase-title {
+            font-family: 'Frank Ruhl Libre', serif;
+            color: var(--gold-light);
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .task-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--gold);
+            cursor: pointer;
+            margin-top: 4px;
+        }
+
+        .task-content strong {
+            display: block;
+            color: var(--white);
+            margin-bottom: 4px;
+        }
+
+        .task-content span {
+            font-size: 0.9rem;
+            color: #A8C5DA;
+        }
+
+        .checked .task-content span {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+
+        .priority-high {
+            color: #E74C3C;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            font-size: 0.8rem;
+            color: var(--sky);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Memorial Project Roadmap</h1>
+        <p class="subtitle">"To infinity and beyond" — Strengthening Yoav's Legacy</p>
+    </header>
+
+    <div class="phase">
+        <div class="phase-title">🛡️ Phase 1: Security & Stability</div>
+        <ul class="task-list">
+            <li class="task-item">
+                <input type="checkbox" id="task1">
+                <div class="task-content">
+                    <strong>Remove Hardcoded Passwords <em class="priority-high">Critical</em></strong>
+                    <span>Delete the plain-text passwords from index.html and switch to a secure authentication service like Firebase or Supabase.</span>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="task2">
+                <div class="task-content">
+                    <strong>Implement Real-Time Database</strong>
+                    <span>Connect the site to a database (Supabase/Firebase) so that comments, stories, and candles are saved permanently across all devices.</span>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase">
+        <div class="phase-title">✨ Phase 2: Interactive Memory Features</div>
+        <ul class="task-list">
+            <li class="task-item">
+                <input type="checkbox" id="task3">
+                <div class="task-content">
+                    <strong>"Yoav's Map" Integration</strong>
+                    <span>Create a visual map with pins at his favorite locations (beaches, hiking trails, etc.) that reveal photos and stories when clicked.</span>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="task4">
+                <div class="task-content">
+                    <strong>Global Candle Heatmap</strong>
+                    <span>Transform the candle section to show a world map where visitors can see the collective light from every location someone has visited the site.</span>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="task5">
+                <div class="task-content">
+                    <strong>Audio Tribute Section</strong>
+                    <span>Add a sound gallery for recordings of Yoav’s voice or his favorite music to create a multi-sensory experience.</span>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase">
+        <div class="phase-title">🚀 Phase 3: Performance & Scalability</div>
+        <ul class="task-list">
+            <li class="task-item">
+                <input type="checkbox" id="task6">
+                <div class="task-content">
+                    <strong>Cloud Hosting Migration</strong>
+                    <span>Move the site from local storage to a professional host like Netlify or Vercel for 99.9% uptime and faster loading in Israel.</span>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="task7">
+                <div class="task-content">
+                    <strong>Image Optimization (Cloudinary)</strong>
+                    <span>Automatically resize high-resolution images so the site remains fast and responsive on mobile phones.</span>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase">
+        <div class="phase-title">💙 Phase 4: Long-Term Engagement</div>
+        <ul class="task-list">
+            <li class="task-item">
+                <input type="checkbox" id="task8">
+                <div class="task-content">
+                    <strong>"Memory of the Week"</strong>
+                    <span>Create a spotlight feature on the home page that rotates through different stories or photos every week.</span>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="task9">
+                <div class="task-content">
+                    <strong>Physical-to-Digital (QR Codes)</strong>
+                    <span>Create QR codes for physical memorial locations that lead directly to the specific gallery or comment section of the site.</span>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="task10">
+                <div class="task-content">
+                    <strong>Legacy Support</strong>
+                    <span>Add a section for community impact, such as a donation tracker for causes Yoav cared about (paramedic training, swimming).</span>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <footer>
+        <p>This roadmap is stored locally. Your progress is saved in your browser.</p>
+    </footer>
+</div>
+
+<script>
+    // Simple script to save checkbox states to localStorage
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    
+    // Load saved states
+    checkboxes.forEach(cb => {
+        const savedState = localStorage.getItem(cb.id);
+        if (savedState === 'true') {
+            cb.checked = true;
+            cb.closest('.task-item').classList.add('checked');
+        }
+        
+        cb.addEventListener('change', () => {
+            localStorage.setItem(cb.id, cb.checked);
+            if (cb.checked) {
+                cb.closest('.task-item').classList.add('checked');
+            } else {
+                cb.closest('.task-item').classList.remove('checked');
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
