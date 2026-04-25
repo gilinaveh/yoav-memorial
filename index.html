@@ -1001,10 +1001,23 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
 
   async function checkAdmin(uid) {
     try {
+      // Force the freshly-signed-in user's ID token to be active before
+      // reading /admins/{uid}. Without this, signInWithEmailAndPassword
+      // can resolve a microsecond before Firestore picks up the new auth
+      // state, so getDoc runs with the previous (anonymous) token. The
+      // rule "request.auth.uid == uid" then evaluates against the
+      // anonymous UID, the read is denied, the catch below swallows it,
+      // and the user sees a silent isAdmin: false despite a valid doc.
+      if (auth.currentUser) {
+        await auth.currentUser.getIdToken(true);
+      }
       const adminDoc = await getDoc(doc(db, 'admins', uid));
+      // Diagnostic: visible in browser console so a future failure tells
+      // us whether the doc was missing vs the read was denied.
+      console.log('[checkAdmin]', { uid, exists: adminDoc.exists() });
       return adminDoc.exists();
     } catch (e) {
-      console.warn('Admin doc check failed:', e);
+      console.error('[checkAdmin] error:', e.code || '?', '|', e.message || e);
       return false;
     }
   }
