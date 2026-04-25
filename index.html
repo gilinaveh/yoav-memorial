@@ -1062,6 +1062,23 @@ const avatarTextColors = ['var(--gold)','var(--sky-light)','#7EC8A4','#C88080'];
 function saveToSheets() { /* disabled — using Drive directly */ }
 function loadFromSheets() { /* disabled — using Drive directly */ }
 
+// ──────────────────────────────────────────────────────────────
+// XSS PROTECTION HELPER
+// All visitor-submitted strings (comment text, names, story body,
+// timeline entries, candle names, etc.) MUST pass through escapeHtml()
+// before being injected into innerHTML, otherwise a hostile post can
+// execute arbitrary code in every visitor's browser.
+// ──────────────────────────────────────────────────────────────
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ══════════════════════════════════════════════════════════════
 // SECTION 3: STAR ANIMATION
 // Creates the twinkling star background on the hero section
@@ -1191,7 +1208,7 @@ function renderCandles() {
     c.innerHTML = `
       <div class="candle-flame"></div>
       <div class="candle-body"></div>
-      <div class="candle-name">${name}</div>
+      <div class="candle-name">${escapeHtml(name)}</div>
     `;
     row.appendChild(c);
   });
@@ -1238,18 +1255,21 @@ function renderComments() {
     const box      = document.createElement('div');
     box.className  = 'comment-box';
     box.dataset.docId = id;
+    // All user-controlled fields are escapeHtml()'d to prevent XSS.
+    // avatarColors/Text are fixed CSS strings; id is a Firestore-generated
+    // alphanumeric doc ID; both are safe.
     box.innerHTML = `
       <div class="comment-header">
-        <div class="avatar" style="background:${avatarColors[colorIdx]};color:${avatarTextColors[colorIdx]};">${initial}</div>
+        <div class="avatar" style="background:${avatarColors[colorIdx]};color:${avatarTextColors[colorIdx]};">${escapeHtml(initial)}</div>
         <div class="comment-meta">
-          <div class="comment-author">${name}${relation ? ' ('+relation+')' : ''}</div>
-          <div class="comment-date">${dateStr || ''}</div>
+          <div class="comment-author">${escapeHtml(name)}${relation ? ' ('+escapeHtml(relation)+')' : ''}</div>
+          <div class="comment-date">${escapeHtml(dateStr || '')}</div>
         </div>
         ${currentUser?.role==='admin'
           ? `<button class="btn btn-danger" onclick="removeComment('${id}')">🗑</button>`
           : ''}
       </div>
-      <div class="comment-text">${text}</div>
+      <div class="comment-text">${escapeHtml(text)}</div>
     `;
     container.appendChild(box);
   });
@@ -1295,11 +1315,12 @@ function renderStories() {
     const block = document.createElement('div');
     block.className = 'story-block';
     block.dataset.docId = id;
+    // User-controlled fields escaped; id is a Firestore alphanumeric doc ID.
     block.innerHTML = `
       <div class="quote-mark">"</div>
-      <p class="story-text">${text}</p>
-      ${author ? `<div style="margin-top:1rem;font-size:0.85rem;color:var(--gold);font-weight:500;">— ${author}</div>` : ''}
-      <div style="font-size:0.75rem;color:var(--text-light);margin-top:0.25rem;">${dateStr||''}</div>
+      <p class="story-text">${escapeHtml(text)}</p>
+      ${author ? `<div style="margin-top:1rem;font-size:0.85rem;color:var(--gold);font-weight:500;">— ${escapeHtml(author)}</div>` : ''}
+      <div style="font-size:0.75rem;color:var(--text-light);margin-top:0.25rem;">${escapeHtml(dateStr||'')}</div>
       ${currentUser?.role==='admin'
         ? `<button class="btn btn-danger" style="margin-top:0.5rem;" onclick="removeStory('${id}')">🗑 מחק</button>`
         : ''}
@@ -1330,11 +1351,12 @@ function addTimelineItem() {
   const tl   = document.getElementById('timelineEl');
   const item = document.createElement('div');
   item.className = 'timeline-item';
+  // year/title/desc come from prompt(); admin-only but still escaped for safety.
   item.innerHTML = `
     <div class="timeline-dot"></div>
-    <div class="timeline-year">${year}</div>
-    <div class="timeline-title">${title}</div>
-    <div class="timeline-desc">${desc}</div>
+    <div class="timeline-year">${escapeHtml(year)}</div>
+    <div class="timeline-title">${escapeHtml(title)}</div>
+    <div class="timeline-desc">${escapeHtml(desc)}</div>
     <button class="btn btn-danger" style="margin-top:0.5rem;"
       onclick="this.closest('.timeline-item').remove()">🗑 מחק</button>
   `;
