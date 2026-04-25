@@ -975,38 +975,50 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
   // sign in with email/password; their UID must have a doc at /admins/{uid}
   // for delete operations to succeed.
   //
-  // `ready` resolves once the very first onAuthStateChanged fires —
-  // callers should `await window.fbAuth.ready` before any Firestore write.
+  // `ready` resolves once any user (anonymous or email) is authenticated —
+  // callers can `await window.fbAuth.ready` before a Firestore write to be
+  // safe, though in practice the SDK queues writes anyway.
+  //
+  // The admin doc lookup is intentionally NOT done inside the listener:
+  // doing so would race with `signInWithEmail`'s caller, which needs the
+  // admin status synchronously after sign-in. Instead, signInWithEmail
+  // performs the lookup itself and returns { user, isAdmin } directly.
   let _resolveReady;
   const ready = new Promise(r => { _resolveReady = r; });
+  let _readyResolved = false;
 
   // Kick off anonymous sign-in immediately. If the user later signs in with
   // email, Firebase replaces the anonymous session with the email session.
   signInAnonymously(auth).catch(e => console.warn('Anonymous sign-in failed:', e));
 
-  onAuthStateChanged(auth, async user => {
-    let isAdmin = false;
-    let isAnon  = true;
-    if (user) {
-      isAnon = user.isAnonymous;
-      if (!user.isAnonymous) {
-        try {
-          const adminDoc = await getDoc(doc(db, 'admins', user.uid));
-          isAdmin = adminDoc.exists();
-        } catch (e) { console.warn('Admin doc check failed:', e); }
-      }
+  onAuthStateChanged(auth, user => {
+    window.fbAuth._user = user;
+    if (!_readyResolved && user) {
+      _readyResolved = true;
+      _resolveReady();
     }
-    window.fbAuth._state = { user, isAdmin, isAnon };
-    _resolveReady();
-    if (window.fbAuth._onChange) window.fbAuth._onChange(window.fbAuth._state);
   });
+
+  async function checkAdmin(uid) {
+    try {
+      const adminDoc = await getDoc(doc(db, 'admins', uid));
+      return adminDoc.exists();
+    } catch (e) {
+      console.warn('Admin doc check failed:', e);
+      return false;
+    }
+  }
 
   window.fbAuth = {
     ready,
-    _state: { user: null, isAdmin: false, isAnon: true },
-    _onChange: null,
-    onChange(cb) { this._onChange = cb; if (this._state.user) cb(this._state); },
-    signInWithEmail: (email, pwd) => signInWithEmailAndPassword(auth, email, pwd),
+    _user: null,
+    get currentUser() { return this._user; },
+    // Sign in and look up admin status atomically. Returns { user, isAdmin }.
+    signInWithEmail: async (email, pwd) => {
+      const cred = await signInWithEmailAndPassword(auth, email, pwd);
+      const isAdmin = await checkAdmin(cred.user.uid);
+      return { user: cred.user, isAdmin };
+    },
     // After signing out we re-establish an anonymous session so visitors
     // can keep posting without a page reload.
     signOut: async () => { await signOut(auth); await signInAnonymously(auth); }
@@ -1041,9 +1053,11 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
  *  • The OAuth scope is 'drive.file' — the narrowest possible scope.
  *    This means the app can ONLY access files it created itself.
  *    It CANNOT read, modify or delete any other files in your Drive.
- *  • Admin passwords are stored in plain text in this file — this is
- *    acceptable for a private family site, but should not be used for
- *    anything sensitive. Change passwords periodically.
+ *  • Admin auth runs through Firebase Authentication (email/password).
+ *    Privileged users are flagged via a /admins/{uid} doc in Firestore.
+ *    Visitors are signed in anonymously on page load so they can post
+ *    candles and comments under the Firestore security rules.
+ *    See SECURITY-MIGRATION.md for setup steps.
  *
  *  BACKUP:
  *  ───────
@@ -1189,13 +1203,12 @@ async function doLogin() {
 
   try {
     // window.fbAuth is set up in the Firebase module script at the bottom of
-    // the page. signInWithEmail returns a UserCredential; the auth-state
-    // listener inside the module then re-evaluates admin status.
-    await window.fbAuth.signInWithEmail(email, password);
-    await window.fbAuth.ready;          // wait for admin doc lookup
-    const state = window.fbAuth._state;
+    // the page. signInWithEmail signs in AND looks up the /admins/{uid} doc
+    // atomically, returning { user, isAdmin } — no race with the auth-state
+    // listener.
+    const { user, isAdmin } = await window.fbAuth.signInWithEmail(email, password);
 
-    if (!state.isAdmin) {
+    if (!isAdmin) {
       // Sign-in succeeded but the account isn't registered as an admin.
       await window.fbAuth.signOut();
       showToast(lang==='he'
@@ -1205,10 +1218,10 @@ async function doLogin() {
     }
 
     currentUser = {
-      uid:      state.user.uid,
-      email:    state.user.email,
-      role:     'admin',
-      name:     state.user.displayName || state.user.email
+      uid:   user.uid,
+      email: user.email,
+      role:  'admin',
+      name:  user.displayName || user.email
     };
     closeModal('loginModal');
     document.getElementById('loginUser').value = '';
