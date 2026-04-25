@@ -650,19 +650,19 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
     <div class="modal-title">🔑 <span data-he>כניסת מנהלים</span><span data-en>Admin Login</span></div>
     <div class="modal-subtitle"><span data-he>כניסה מוגבלת למנהלי האתר בלבד</span><span data-en>Access restricted to site administrators only</span></div>
     <div class="form-group" style="margin-bottom:1rem;">
-      <label><span data-he>שם משתמש</span><span data-en>Username</span></label>
-      <input id="loginUser" type="text" placeholder="username" onkeydown="if(event.key==='Enter')doLogin()">
+      <label><span data-he>אימייל</span><span data-en>Email</span></label>
+      <input id="loginUser" type="email" autocomplete="email" placeholder="name@example.com" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <div class="form-group" style="margin-bottom:1.5rem;">
       <label><span data-he>סיסמה</span><span data-en>Password</span></label>
-      <input id="loginPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      <input id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <button class="btn btn-gold" style="width:100%;" onclick="doLogin()">
       <span data-he>כניסה</span><span data-en>Login</span>
     </button>
     <div class="info-box" style="margin-top:1.25rem;">
-      <span data-he><strong>מנהלים:</strong> שנה את פרטי הכניסה בקוד לפני הפרסום</span>
-      <span data-en><strong>Admins:</strong> Change login credentials in the code before publishing</span>
+      <span data-he><strong>מנהלים:</strong> נדרש חשבון Firebase Auth + רישום ב-/admins/{uid}</span>
+      <span data-en><strong>Admins:</strong> needs a Firebase Auth account + matching /admins/{uid} doc</span>
     </div>
   </div>
 </div>
@@ -924,13 +924,17 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- Firebase (module) — initializes Firestore and exposes window.fbDB bridge -->
+<!-- Firebase (module) — initializes Firestore + Auth, exposes fbDB and fbAuth bridges -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
   import {
-    getFirestore, collection, addDoc, deleteDoc, doc,
+    getFirestore, collection, addDoc, deleteDoc, doc, getDoc,
     onSnapshot, orderBy, query, serverTimestamp
   } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
+  import {
+    getAuth, signInAnonymously, signInWithEmailAndPassword,
+    signOut, onAuthStateChanged
+  } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyDUITgvQ95rsJzD_7Y0Cz6BJwcMAGg1zyA",
@@ -941,8 +945,9 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
     appId: "1:654575963485:web:05c9ae07f4c10b4881ecb4"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db  = getFirestore(app);
+  const app  = initializeApp(firebaseConfig);
+  const db   = getFirestore(app);
+  const auth = getAuth(app);
 
   const candlesQ  = query(collection(db, 'candles'),  orderBy('createdAt', 'asc'));
   const commentsQ = query(collection(db, 'comments'), orderBy('createdAt', 'asc'));
@@ -962,6 +967,61 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
     deleteCandle : id => deleteDoc(doc(db, 'candles',  id)),
     deleteComment: id => deleteDoc(doc(db, 'comments', id)),
     deleteStory  : id => deleteDoc(doc(db, 'stories',  id)),
+  };
+
+  // ── Auth bridge ──────────────────────────────────────────
+  // Visitors are auto-signed-in anonymously so they can light candles
+  // and post comments under the new Firestore rules. Admins additionally
+  // sign in with email/password; their UID must have a doc at /admins/{uid}
+  // for delete operations to succeed.
+  //
+  // `ready` resolves once any user (anonymous or email) is authenticated —
+  // callers can `await window.fbAuth.ready` before a Firestore write to be
+  // safe, though in practice the SDK queues writes anyway.
+  //
+  // The admin doc lookup is intentionally NOT done inside the listener:
+  // doing so would race with `signInWithEmail`'s caller, which needs the
+  // admin status synchronously after sign-in. Instead, signInWithEmail
+  // performs the lookup itself and returns { user, isAdmin } directly.
+  let _resolveReady;
+  const ready = new Promise(r => { _resolveReady = r; });
+  let _readyResolved = false;
+
+  // Kick off anonymous sign-in immediately. If the user later signs in with
+  // email, Firebase replaces the anonymous session with the email session.
+  signInAnonymously(auth).catch(e => console.warn('Anonymous sign-in failed:', e));
+
+  onAuthStateChanged(auth, user => {
+    window.fbAuth._user = user;
+    if (!_readyResolved && user) {
+      _readyResolved = true;
+      _resolveReady();
+    }
+  });
+
+  async function checkAdmin(uid) {
+    try {
+      const adminDoc = await getDoc(doc(db, 'admins', uid));
+      return adminDoc.exists();
+    } catch (e) {
+      console.warn('Admin doc check failed:', e);
+      return false;
+    }
+  }
+
+  window.fbAuth = {
+    ready,
+    _user: null,
+    get currentUser() { return this._user; },
+    // Sign in and look up admin status atomically. Returns { user, isAdmin }.
+    signInWithEmail: async (email, pwd) => {
+      const cred = await signInWithEmailAndPassword(auth, email, pwd);
+      const isAdmin = await checkAdmin(cred.user.uid);
+      return { user: cred.user, isAdmin };
+    },
+    // After signing out we re-establish an anonymous session so visitors
+    // can keep posting without a page reload.
+    signOut: async () => { await signOut(auth); await signInAnonymously(auth); }
   };
 </script>
 
@@ -993,9 +1053,11 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
  *  • The OAuth scope is 'drive.file' — the narrowest possible scope.
  *    This means the app can ONLY access files it created itself.
  *    It CANNOT read, modify or delete any other files in your Drive.
- *  • Admin passwords are stored in plain text in this file — this is
- *    acceptable for a private family site, but should not be used for
- *    anything sensitive. Change passwords periodically.
+ *  • Admin auth runs through Firebase Authentication (email/password).
+ *    Privileged users are flagged via a /admins/{uid} doc in Firestore.
+ *    Visitors are signed in anonymously on page load so they can post
+ *    candles and comments under the Firestore security rules.
+ *    See SECURITY-MIGRATION.md for setup steps.
  *
  *  BACKUP:
  *  ───────
@@ -1011,12 +1073,13 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
 // Change these values if you ever recreate the Google Cloud project
 // ══════════════════════════════════════════════════════════════
 
-const USERS = {
-  // Admin accounts — can upload photos and delete content
-  // Format: 'username': { pass: 'password', role: 'admin', name: 'Display Name' }
-  'tzafrir': { pass: 'Yoav2024!', role: 'admin', name: 'צפריר' },
-  'lilach':  { pass: 'Lilach2024!', role: 'admin', name: 'לילך (אמא)' }
-};
+// Admin accounts are now managed in Firebase Authentication.
+// Privileged users have a doc at /admins/{uid} (see firestore.rules).
+// To add or remove an admin: Firebase Console → Authentication (create user)
+// then Firestore → /admins/{uid} (create matching doc).
+//
+// The hardcoded USERS{} table that used to live here has been removed —
+// it leaked plaintext passwords to anyone who viewed source.
 
 // Google Drive configuration
 // These are baked in so no setup is needed after deployment
@@ -1062,6 +1125,23 @@ const avatarTextColors = ['var(--gold)','var(--sky-light)','#7EC8A4','#C88080'];
 function saveToSheets() { /* disabled — using Drive directly */ }
 function loadFromSheets() { /* disabled — using Drive directly */ }
 
+// ──────────────────────────────────────────────────────────────
+// XSS PROTECTION HELPER
+// All visitor-submitted strings (comment text, names, story body,
+// timeline entries, candle names, etc.) MUST pass through escapeHtml()
+// before being injected into innerHTML, otherwise a hostile post can
+// execute arbitrary code in every visitor's browser.
+// ──────────────────────────────────────────────────────────────
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ══════════════════════════════════════════════════════════════
 // SECTION 3: STAR ANIMATION
 // Creates the twinkling star background on the hero section
@@ -1099,33 +1179,69 @@ function toggleLang() {
 
 // ══════════════════════════════════════════════════════════════
 // SECTION 5: AUTHENTICATION
-// Simple password-based admin login (stored in USERS constant above)
-// This is suitable for a private family site
+//
+// Backed by Firebase Authentication.
+//   • Visitors are signed in anonymously on page load — this lets them
+//     light candles and post comments under the new Firestore rules
+//     without seeing a sign-in prompt.
+//   • Admins additionally sign in with email/password. Their UID must
+//     have a matching doc at /admins/{uid} in Firestore for delete
+//     operations to succeed.
 // ══════════════════════════════════════════════════════════════
 
 function openLogin()      { document.getElementById('loginModal').classList.add('open'); }
 function closeModal(id)   { document.getElementById(id).classList.remove('open'); }
 
-function doLogin() {
-  const username = document.getElementById('loginUser').value.trim().toLowerCase();
+async function doLogin() {
+  const email    = document.getElementById('loginUser').value.trim();
   const password = document.getElementById('loginPass').value;
-  const user = USERS[username];
 
-  if (!user || user.pass !== password) {
-    showToast(lang==='he' ? 'שם משתמש או סיסמה שגויים' : 'Invalid credentials');
+  if (!email || !password) {
+    showToast(lang==='he' ? 'אנא מלא אימייל וסיסמה' : 'Please fill in email and password');
     return;
   }
 
-  currentUser = { username, role: user.role, name: user.name };
-  closeModal('loginModal');
-  document.getElementById('loginUser').value = '';
-  document.getElementById('loginPass').value = '';
-  applyAuth();
-  renderComments(); renderStories(); // refresh delete buttons
-  showToast(`ברוך הבא, ${user.name}! 👋`);
+  try {
+    // window.fbAuth is set up in the Firebase module script at the bottom of
+    // the page. signInWithEmail signs in AND looks up the /admins/{uid} doc
+    // atomically, returning { user, isAdmin } — no race with the auth-state
+    // listener.
+    const { user, isAdmin } = await window.fbAuth.signInWithEmail(email, password);
+
+    if (!isAdmin) {
+      // Sign-in succeeded but the account isn't registered as an admin.
+      await window.fbAuth.signOut();
+      showToast(lang==='he'
+        ? 'החשבון אינו רשום כמנהל'
+        : 'This account is not registered as an admin');
+      return;
+    }
+
+    currentUser = {
+      uid:   user.uid,
+      email: user.email,
+      role:  'admin',
+      name:  user.displayName || user.email
+    };
+    closeModal('loginModal');
+    document.getElementById('loginUser').value = '';
+    document.getElementById('loginPass').value = '';
+    applyAuth();
+    renderComments(); renderStories(); // refresh delete buttons
+    showToast(`${lang==='he' ? 'ברוך הבא' : 'Welcome'}, ${currentUser.name}! 👋`);
+  } catch (e) {
+    console.error('Login failed:', e);
+    // Map common Firebase auth errors to a friendly message; everything
+    // else surfaces as a generic invalid-credentials toast.
+    const msg = (lang === 'he')
+      ? 'אימייל או סיסמה שגויים'
+      : 'Invalid email or password';
+    showToast(msg);
+  }
 }
 
-function logout() {
+async function logout() {
+  try { await window.fbAuth.signOut(); } catch (e) { console.warn('signOut failed:', e); }
   currentUser = null;
   document.getElementById('statusBar').classList.remove('visible');
   document.getElementById('adminBar').classList.remove('visible');
@@ -1191,7 +1307,7 @@ function renderCandles() {
     c.innerHTML = `
       <div class="candle-flame"></div>
       <div class="candle-body"></div>
-      <div class="candle-name">${name}</div>
+      <div class="candle-name">${escapeHtml(name)}</div>
     `;
     row.appendChild(c);
   });
@@ -1238,18 +1354,21 @@ function renderComments() {
     const box      = document.createElement('div');
     box.className  = 'comment-box';
     box.dataset.docId = id;
+    // All user-controlled fields are escapeHtml()'d to prevent XSS.
+    // avatarColors/Text are fixed CSS strings; id is a Firestore-generated
+    // alphanumeric doc ID; both are safe.
     box.innerHTML = `
       <div class="comment-header">
-        <div class="avatar" style="background:${avatarColors[colorIdx]};color:${avatarTextColors[colorIdx]};">${initial}</div>
+        <div class="avatar" style="background:${avatarColors[colorIdx]};color:${avatarTextColors[colorIdx]};">${escapeHtml(initial)}</div>
         <div class="comment-meta">
-          <div class="comment-author">${name}${relation ? ' ('+relation+')' : ''}</div>
-          <div class="comment-date">${dateStr || ''}</div>
+          <div class="comment-author">${escapeHtml(name)}${relation ? ' ('+escapeHtml(relation)+')' : ''}</div>
+          <div class="comment-date">${escapeHtml(dateStr || '')}</div>
         </div>
         ${currentUser?.role==='admin'
           ? `<button class="btn btn-danger" onclick="removeComment('${id}')">🗑</button>`
           : ''}
       </div>
-      <div class="comment-text">${text}</div>
+      <div class="comment-text">${escapeHtml(text)}</div>
     `;
     container.appendChild(box);
   });
@@ -1295,11 +1414,12 @@ function renderStories() {
     const block = document.createElement('div');
     block.className = 'story-block';
     block.dataset.docId = id;
+    // User-controlled fields escaped; id is a Firestore alphanumeric doc ID.
     block.innerHTML = `
       <div class="quote-mark">"</div>
-      <p class="story-text">${text}</p>
-      ${author ? `<div style="margin-top:1rem;font-size:0.85rem;color:var(--gold);font-weight:500;">— ${author}</div>` : ''}
-      <div style="font-size:0.75rem;color:var(--text-light);margin-top:0.25rem;">${dateStr||''}</div>
+      <p class="story-text">${escapeHtml(text)}</p>
+      ${author ? `<div style="margin-top:1rem;font-size:0.85rem;color:var(--gold);font-weight:500;">— ${escapeHtml(author)}</div>` : ''}
+      <div style="font-size:0.75rem;color:var(--text-light);margin-top:0.25rem;">${escapeHtml(dateStr||'')}</div>
       ${currentUser?.role==='admin'
         ? `<button class="btn btn-danger" style="margin-top:0.5rem;" onclick="removeStory('${id}')">🗑 מחק</button>`
         : ''}
@@ -1330,11 +1450,12 @@ function addTimelineItem() {
   const tl   = document.getElementById('timelineEl');
   const item = document.createElement('div');
   item.className = 'timeline-item';
+  // year/title/desc come from prompt(); admin-only but still escaped for safety.
   item.innerHTML = `
     <div class="timeline-dot"></div>
-    <div class="timeline-year">${year}</div>
-    <div class="timeline-title">${title}</div>
-    <div class="timeline-desc">${desc}</div>
+    <div class="timeline-year">${escapeHtml(year)}</div>
+    <div class="timeline-title">${escapeHtml(title)}</div>
+    <div class="timeline-desc">${escapeHtml(desc)}</div>
     <button class="btn btn-danger" style="margin-top:0.5rem;"
       onclick="this.closest('.timeline-item').remove()">🗑 מחק</button>
   `;
