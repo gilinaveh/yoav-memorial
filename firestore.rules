@@ -1,0 +1,104 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────
+// Yoav Agmon Memorial — Firestore Security Rules
+//
+// Threat model
+//   • Anyone can READ all candles, comments, and stories — this is
+//     a public memorial; reads are intentionally open.
+//   • CREATE requires a Firebase Auth session (anonymous is fine).
+//     This blocks bulk spam from random scripts hitting the public
+//     Firebase project ID, and gives App Check a hook later.
+//   • UPDATE is forbidden — entries are immutable. Edits = delete + recreate.
+//   • DELETE requires the caller to have a doc at /admins/{uid}.
+//
+// Bootstrapping admins
+//   Create the document /admins/{uid} for each admin in the Firebase
+//   console (Firestore -> + Start collection -> "admins" -> add doc with
+//   the user's UID as the document ID, with whatever payload you want —
+//   the existence of the doc is what matters, e.g. { name: "Tzafrir" }).
+//
+// Field validation
+//   Each create has minimal sanity checks: required fields exist, are
+//   strings, and are within reasonable size. This is defence-in-depth
+//   alongside the client-side escapeHtml() applied at render time.
+// ─────────────────────────────────────────────────────────────
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Reusable helpers ──────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isShortString(field, max) {
+      return field is string && field.size() > 0 && field.size() <= max;
+    }
+
+    function isOptionalShortString(field, max) {
+      return field == null || (field is string && field.size() <= max);
+    }
+
+    function hasServerTimestamp() {
+      return request.resource.data.createdAt == request.time;
+    }
+
+    // ── Candles: { name: string<=80, createdAt: serverTimestamp } ──
+    match /candles/{candleId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+                    && request.resource.data.keys().hasOnly(['name', 'createdAt'])
+                    && isShortString(request.resource.data.name, 80)
+                    && hasServerTimestamp();
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // ── Comments: { name, relation?, text, dateStr?, createdAt } ──
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+                    && request.resource.data.keys().hasOnly(
+                         ['name', 'relation', 'text', 'dateStr', 'createdAt'])
+                    && isShortString(request.resource.data.name, 80)
+                    && isOptionalShortString(request.resource.data.relation, 80)
+                    && isShortString(request.resource.data.text, 2000)
+                    && isOptionalShortString(request.resource.data.dateStr, 40)
+                    && hasServerTimestamp();
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // ── Stories: { author?, text, dateStr?, createdAt } ──
+    match /stories/{storyId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+                    && request.resource.data.keys().hasOnly(
+                         ['author', 'text', 'dateStr', 'createdAt'])
+                    && isOptionalShortString(request.resource.data.author, 80)
+                    && isShortString(request.resource.data.text, 5000)
+                    && isOptionalShortString(request.resource.data.dateStr, 40)
+                    && hasServerTimestamp();
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // ── Admins: read your own doc, never write from the client ──
+    // Bootstrap by creating these in the Firebase Console.
+    match /admins/{uid} {
+      allow read: if isSignedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // ── Default deny ──────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
