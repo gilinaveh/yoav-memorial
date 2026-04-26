@@ -1,0 +1,51 @@
+name: Daily Firestore backup
+
+on:
+  # 22:00 UTC = midnight Israel Standard Time (IST, UTC+2).
+  # During Israel summer time (IDT, UTC+3) it runs at 01:00 local —
+  # close enough; we don't need second-level precision for backups.
+  schedule:
+    - cron: '0 22 * * *'
+  # Manual trigger so an admin can grab a fresh snapshot any time.
+  workflow_dispatch:
+
+jobs:
+  backup:
+    name: Export Firestore to JSON
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run backup script
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node scripts/backup-firestore.js
+
+      - name: Upload backup as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # Artifacts are kept 90 days by default. To keep longer,
+          # download monthly and stash somewhere off-platform, or push
+          # the file to a long-lived branch.
+          name: yoav-memorial-firestore-backup
+          path: backups/*.json
+          retention-days: 90
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ -d backups ]; then
+            echo "### Backup result" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            ls -lh backups/ >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
