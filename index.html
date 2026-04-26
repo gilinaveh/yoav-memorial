@@ -301,7 +301,42 @@ nav {
 .gallery-placeholder { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; color: var(--text-light); }
 .gallery-placeholder .icon { font-size: 2rem; }
 .gallery-placeholder .label { font-size: 0.75rem; text-align: center; padding: 0 0.5rem; }
-.gallery-img { width: 100%; height: 100%; object-fit: cover; }
+.gallery-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Fade in once the image actually decodes (the .loaded class is added
+     by the onload handler in addPhotoToGallery). Combined with the
+     skeleton shimmer below, this gives a "Polaroid develops in" effect
+     instead of photos popping in jarringly. */
+  opacity: 0;
+  transition: opacity 0.45s ease-in;
+}
+.gallery-img.loaded { opacity: 1; }
+
+/* Skeleton shimmer placeholder while a gallery cell is waiting for its
+   image to load. Excluded for upload-slot (the "+" tile) which has its
+   own dashed-border styling. P1-6 in the roadmap. */
+.gallery-item:not(.loaded):not(.upload-slot)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.03) 0%,
+    rgba(201,168,76,0.07) 50%,
+    rgba(255,255,255,0.03) 100%);
+  background-size: 200% 100%;
+  animation: gallery-shimmer 1.6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+.gallery-item.loaded::before { display: none; }
+.gallery-item .gallery-img { position: relative; z-index: 1; }
+
+@keyframes gallery-shimmer {
+  0%   { background-position:  200% 0; }
+  100% { background-position: -200% 0; }
+}
 
 /* Lightbox */
 .lightbox {
@@ -1671,9 +1706,16 @@ function addPhotoToGallery(src, caption, save=true, addSlot=true) {
   const altText = escapeHtml(caption || (lang === 'he'
     ? 'תמונה של יואב אגמון'
     : 'Photo of Yoav Agmon'));
+  // onload toggles a .loaded class on both the <img> (fades it in) and
+  // its parent .gallery-item (removes the shimmer skeleton). Combined
+  // with loading="lazy", this means off-screen photos don't fire any
+  // network request until the visitor scrolls near them, and once
+  // decoded they fade in over ~450ms instead of popping. Helps a lot
+  // with the Drive thumbnail rate-limiting we hit on large galleries.
   item.innerHTML = `
-    <img class="gallery-img" src="${src}" alt="${altText}" loading="lazy"
+    <img class="gallery-img" src="${src}" alt="${altText}" loading="lazy" decoding="async"
          onclick="openLightbox(this)"
+         onload="this.classList.add('loaded'); this.parentElement.classList.add('loaded')"
          onerror="this.parentElement.style.display='none'">
     ${deleteBtn}
   `;
