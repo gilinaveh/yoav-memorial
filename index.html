@@ -4,6 +4,40 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>לזכרו של יואב אגמון | In Memory of Yoav Agmon</title>
+
+<!-- ────────────────────────────────────────────────────────────
+     Content Security Policy (P0-5).
+
+     Restricts where scripts, styles, fonts, images, and network
+     calls are allowed to come from. A defence-in-depth layer on
+     top of the XSS escape in escapeHtml(): if anything ever slips
+     past the escape, the browser still won't load attacker-injected
+     resources from arbitrary origins.
+
+     'unsafe-inline' is granted to script-src and style-src because
+     the page has many inline event handlers (onclick=...) and
+     style attributes throughout. Tightening this further requires
+     refactoring all inline handlers, which is tracked in Phase 2.
+
+     GitHub Pages doesn't support custom HTTP headers, so HSTS,
+     X-Frame-Options, and Referrer-Policy will land when the site
+     migrates to Netlify/Vercel (P1-3).
+     ──────────────────────────────────────────────────────────── -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src  'self' 'unsafe-inline' https://www.gstatic.com https://accounts.google.com https://apis.google.com https://www.google.com https://www.gstatic.com/recaptcha/;
+  style-src   'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src    'self' https://fonts.gstatic.com;
+  img-src     'self' data: blob: https://drive.google.com https://lh3.googleusercontent.com https://*.googleusercontent.com;
+  connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://www.googleapis.com https://oauth2.googleapis.com https://securetoken.googleapis.com https://accounts.google.com https://content-firebaseappcheck.googleapis.com https://firebaseappcheck.googleapis.com;
+  frame-src   https://accounts.google.com https://yoav-memorial-7a8a3.firebaseapp.com https://www.google.com;
+  base-uri    'self';
+  form-action 'self';
+">
+
+<!-- Site config (must load before any code that reads window.SITE_CONFIG) -->
+<script src="config/site-config.js"></script>
+
 <!-- Google Identity Services for OAuth Drive upload -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -936,18 +970,34 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
     signOut, onAuthStateChanged
   } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDUITgvQ95rsJzD_7Y0Cz6BJwcMAGg1zyA",
-    authDomain: "yoav-memorial-7a8a3.firebaseapp.com",
-    projectId: "yoav-memorial-7a8a3",
-    storageBucket: "yoav-memorial-7a8a3.firebasestorage.app",
-    messagingSenderId: "654575963485",
-    appId: "1:654575963485:web:05c9ae07f4c10b4881ecb4"
-  };
+  // Config is loaded synchronously via <script src="config/site-config.js">
+  // earlier in <head>, so window.SITE_CONFIG is available here.
+  const firebaseConfig = window.SITE_CONFIG.firebase;
 
   const app  = initializeApp(firebaseConfig);
   const db   = getFirestore(app);
   const auth = getAuth(app);
+
+  // ── Optional: Firebase App Check (P0-4) ──────────────────
+  // Only initialized if SITE_CONFIG.appCheck.recaptchaSiteKey is set.
+  // When enabled, App Check verifies that requests come from the real
+  // gilinaveh.github.io domain (via reCAPTCHA Enterprise) and rejects
+  // automated abuse against your Firebase quota. See SECURITY-MIGRATION.md
+  // for the registration steps. Default null = off, nothing to break.
+  const _appCheckKey = window.SITE_CONFIG?.appCheck?.recaptchaSiteKey;
+  if (_appCheckKey) {
+    try {
+      const { initializeAppCheck, ReCaptchaEnterpriseProvider } =
+        await import('https://www.gstatic.com/firebasejs/11.0.2/firebase-app-check.js');
+      initializeAppCheck(app, {
+        provider: new ReCaptchaEnterpriseProvider(_appCheckKey),
+        isTokenAutoRefreshEnabled: true
+      });
+      console.log('[App Check] enabled for', firebaseConfig.projectId);
+    } catch (e) {
+      console.warn('[App Check] init failed:', e);
+    }
+  }
 
   const candlesQ  = query(collection(db, 'candles'),  orderBy('createdAt', 'asc'));
   const commentsQ = query(collection(db, 'comments'), orderBy('createdAt', 'asc'));
@@ -1094,11 +1144,13 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
 // The hardcoded USERS{} table that used to live here has been removed —
 // it leaked plaintext passwords to anyone who viewed source.
 
-// Google Drive configuration
-// These are baked in so no setup is needed after deployment
-const DRIVE_FOLDER_ID = '1YdyRDpRVCXuTG9s6DmecrjkphfNN_3HP'; // "Yoav Memorial Photos" folder
-const DRIVE_API_KEY   = 'AIzaSyAkd33J8OK8WY9PtyGEeKrcGLQ33ad16rA'; // Read-only, domain-restricted
-const OAUTH_CLIENT_ID = '403039923089-7u9pje36ubs60vto6sqlq6rrrks4a8pb.apps.googleusercontent.com';
+// Google Drive configuration — pulled from window.SITE_CONFIG.drive
+// (loaded by config/site-config.js in <head>). Centralising config there
+// is the foundation for swapping per-environment values when the
+// dev/staging/prod split lands in Phase 5.
+const DRIVE_FOLDER_ID = window.SITE_CONFIG.drive.folderId; // "Yoav Memorial Photos" folder
+const DRIVE_API_KEY   = window.SITE_CONFIG.drive.apiKey;   // Read-only, domain-restricted
+const OAUTH_CLIENT_ID = window.SITE_CONFIG.drive.clientId;
 
 // driveConfig is what the rest of the code uses
 // localStorage overrides allow admins to change settings without editing code
