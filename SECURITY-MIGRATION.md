@@ -253,3 +253,107 @@ content), implement a small Cloud Function that lists files
 server-side via a service account, returns just the file IDs to the
 page, and keeps the folder Restricted. That's a Phase 2 / Phase 3
 task and not currently on the roadmap.
+
+---
+
+## Daily automated Firestore backup (P1-8) — setup
+
+A GitHub Actions workflow now exports every Firestore collection
+to JSON every night at midnight Israel time, and on demand. Backups
+are stored as workflow artifacts with 90-day retention.
+
+This requires **two one-time setup steps** the first time it runs:
+
+### 1. Create a service account in Google Cloud
+
+Open <https://console.cloud.google.com/iam-admin/serviceaccounts?project=yoav-memorial-7a8a3>.
+
+1. Click **+ Create Service Account** (top of the page).
+2. **Service account name:** `firestore-backup-bot`
+   **Service account ID:** `firestore-backup-bot` (auto-fills)
+   **Description:** "Read-only backup runner for GitHub Actions"
+   Click **Create and continue**.
+3. **Grant this service account access** — choose role
+   **Cloud Datastore User** (gives read+write to Firestore; we
+   need write for the restore script too). Click **Continue**.
+4. Skip the optional "Grant users access" step → **Done**.
+5. Back on the service accounts list, click your new
+   `firestore-backup-bot` row.
+6. Go to the **Keys** tab → **Add key** → **Create new key**
+   → choose **JSON** → **Create**. A `.json` file downloads.
+   *Treat this file like a password — anyone with it can read/write
+   your database. Don't commit it. Don't email it.*
+
+### 2. Add the key as a GitHub Secret
+
+1. Open the JSON file you downloaded in any text editor.
+2. **Select all** (Cmd+A) → **copy** (Cmd+C). The whole thing,
+   curly brace to curly brace.
+3. Open <https://github.com/gilinaveh/yoav-memorial/settings/secrets/actions>.
+4. Click **New repository secret**.
+5. **Name:** `FIREBASE_SERVICE_ACCOUNT` (exact spelling, all caps,
+   underscores).
+   **Value:** paste the JSON contents.
+   Click **Add secret**.
+6. **Delete the JSON file from your Downloads folder.** It's now
+   stored encrypted in GitHub; you don't need the local copy.
+
+### 3. Trigger the first run manually
+
+The cron schedule kicks in tonight, but you can run it now to verify:
+
+1. Open <https://github.com/gilinaveh/yoav-memorial/actions/workflows/backup.yml>.
+2. Click the **Run workflow** dropdown on the right → **Run workflow**.
+3. After ~30 seconds the run finishes. Click into it.
+4. Scroll down → **Artifacts** section → download
+   `yoav-memorial-firestore-backup`.
+5. Unzip — you'll see `yoav-memorial-backup-<timestamp>.json` with
+   every candle, comment, story, and admin doc inside.
+
+### 4. (Optional) Restore from a backup
+
+If you ever need to roll back:
+
+```bash
+# Get the service account JSON onto your machine (from 1Password,
+# a USB stick, wherever you put it after setup).
+export FIREBASE_SERVICE_ACCOUNT="$(cat ~/path/to/key.json)"
+
+# Restore everything from a downloaded backup file
+npm run restore -- backups/yoav-memorial-backup-2026-04-26T0000.json
+
+# Or just one collection
+npm run restore -- backups/yoav-memorial-backup-...json --only comments
+```
+
+The restore script uses the same service-account credential and
+preserves document IDs, so a restored doc is byte-identical to the
+original (Firestore Timestamps are reconverted from the JSON's ISO
+strings).
+
+### Cost
+
+- GitHub Actions: free (uses ~30 seconds of your 2,000 free
+  minutes/month).
+- Firestore reads: free (a typical run reads <500 docs, well under
+  the 50,000-doc daily free quota).
+- Storage: free (artifacts < 500MB don't count against billing on
+  public repos).
+
+**Total recurring cost: $0.**
+
+### Long-term retention
+
+90 days of artifacts is the default. If you want to keep backups
+longer, the simplest options are:
+
+1. **Manual archival**: download an artifact monthly and stash it
+   in Drive / iCloud / wherever. Set a calendar reminder for the
+   1st of each month.
+2. **Push to a `backups` branch**: extend the workflow to also
+   commit each backup to a long-lived `backups` branch in this
+   repo. Forever retention, no extra cost. We can wire that up
+   later if you want.
+3. **Push to GCS**: requires upgrading Firebase to Blaze
+   (pay-as-you-go) plan and creating a Cloud Storage bucket.
+   Costs pennies per month for our data volume.
