@@ -217,5 +217,39 @@ official Firebase recommendation.
   immediately. The rules' length caps and XSS escape mean the worst
   case is now "ugly text" rather than "executes code", but a
   moderation queue keeps emotional content from surprising the family.
-- **Drive folder sharing audit** (P0-8) — manual review needed on
-  the Drive side; nothing to deploy.
+- ~~**Drive folder sharing audit** (P0-8)~~ — done April 26. Decision
+  recorded below.
+
+---
+
+## Drive folder sharing — audit result (April 26, 2026)
+
+**Setting kept:** "Anyone with the link → Viewer" at the
+`Yoav Memorial Photos` folder level.
+
+**Why not Restricted:** the site's gallery loads in two stages:
+
+1. `GET drive/v3/files?q='folderId' in parents&...` — *lists* the
+   folder using the public API key. This call requires the FOLDER
+   itself to be readable.
+2. `<img src="https://drive.google.com/thumbnail?id=X">` — *displays*
+   each file. The upload code makes every uploaded file individually
+   public via `{role:'reader', type:'anyone'}` permissions, so this
+   step works regardless of folder-level sharing.
+
+A Restricted folder breaks step 1 (the API key can't read a private
+folder), so visitors see an empty gallery even though the individual
+files would still render if their IDs were known. We tested this on
+April 26 and reverted to "Anyone with the link".
+
+**Residual risk:** the folder ID is present in
+`config/site-config.js` (visible in page source), so anyone who views
+source could construct `https://drive.google.com/drive/folders/<id>`
+and browse the folder in Drive's native UI. For a public memorial
+that risk is essentially zero — the photos are intentionally public.
+
+**If true folder privacy is ever needed** (e.g. mixed public/private
+content), implement a small Cloud Function that lists files
+server-side via a service account, returns just the file IDs to the
+page, and keeps the folder Restricted. That's a Phase 2 / Phase 3
+task and not currently on the roadmap.
