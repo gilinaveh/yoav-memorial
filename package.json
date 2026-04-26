@@ -1,0 +1,16 @@
+{
+  "name": "yoav-memorial",
+  "version": "1.0.0",
+  "private": true,
+  "description": "In memory of Yoav Agmon — public memorial site.",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "serve": "serve -l 8080 ."
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "serve": "^14.2.4"
+  }
+}
