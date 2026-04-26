@@ -4,6 +4,30 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>לזכרו של יואב אגמון | In Memory of Yoav Agmon</title>
+
+<!-- Search engines + browser tab description -->
+<meta name="description" content="Memorial site for Yoav Agmon — לוחם גולני, חובש, בן, אח, חבר לכולם. Share a memory, light a candle, browse photos.">
+<meta name="theme-color" content="#0D1B2A">
+
+<!-- Open Graph (Facebook, WhatsApp, LinkedIn, Slack) -->
+<meta property="og:type"        content="website">
+<meta property="og:title"       content="לזכרו של יואב אגמון | In Memory of Yoav Agmon">
+<meta property="og:description" content="לוחם גולני, חובש, בן, אח, חבר לכולם — נרות יהיו לו לנשמה ולזכרו לעולם.">
+<meta property="og:url"         content="https://gilinaveh.github.io/yoav-memorial/">
+<meta property="og:site_name"   content="Yoav Agmon Memorial">
+<meta property="og:locale"      content="he_IL">
+<meta property="og:locale:alternate" content="en_US">
+<!-- TODO: replace with a 1200x630 JPG/PNG portrait of Yoav for richer share previews.
+     The favicon SVG works as a fallback but raster images render more reliably across
+     all social platforms. Upload to /og-image.jpg in the repo and update this URL. -->
+<meta property="og:image"       content="https://gilinaveh.github.io/yoav-memorial/favicon.svg">
+
+<!-- Twitter Card -->
+<meta name="twitter:card"        content="summary">
+<meta name="twitter:title"       content="לזכרו של יואב אגמון | In Memory of Yoav Agmon">
+<meta name="twitter:description" content="לוחם גולני, חובש, בן, אח, חבר לכולם.">
+<meta name="twitter:image"       content="https://gilinaveh.github.io/yoav-memorial/favicon.svg">
+
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="alternate icon" href="favicon.svg">
 
@@ -68,6 +92,31 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Visible focus rings for keyboard navigation. :focus-visible fires only
+   when the focus came from the keyboard, so mouse clicks still look clean.
+   Belongs to P1-7 of the roadmap (a11y pass). */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Honour reduced-motion preferences — visitors with vestibular disorders
+   shouldn't be subjected to the twinkling stars or pulsing emblem. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
 body {
   font-family: 'Heebo', 'Frank Ruhl Libre', sans-serif;
@@ -459,7 +508,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
     <a href="#stories" data-he>סיפורים</a><a href="#stories" data-en>Stories</a>
     <a href="#candles" data-he>נרות זיכרון</a><a href="#candles" data-en>Candles</a>
     <a href="#comments" data-he>תגובות</a><a href="#comments" data-en>Comments</a>
-    <button class="lang-toggle" onclick="toggleLang()" id="langBtn">EN</button>
+    <button class="lang-toggle" onclick="toggleLang()" id="langBtn" aria-label="Switch language">EN</button>
     <button class="btn btn-outline login-btn" onclick="openLogin()" id="loginBtn" style="font-size:0.8rem;padding:0.35rem 0.9rem;">
       <span data-he>כניסה</span><span data-en>Login</span>
     </button>
@@ -682,7 +731,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
 <!-- LOGIN MODAL -->
 <div class="modal-overlay" id="loginModal">
   <div class="modal">
-    <button class="modal-close" onclick="closeModal('loginModal')">×</button>
+    <button class="modal-close" aria-label="Close login dialog" onclick="closeModal('loginModal')">×</button>
     <div class="modal-title">🔑 <span data-he>כניסת מנהלים</span><span data-en>Admin Login</span></div>
     <div class="modal-subtitle"><span data-he>כניסה מוגבלת למנהלי האתר בלבד</span><span data-en>Access restricted to site administrators only</span></div>
     <div class="form-group" style="margin-bottom:1rem;">
@@ -706,7 +755,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
 <!-- UPLOAD MODAL -->
 <div class="modal-overlay" id="uploadModal">
   <div class="modal upload-modal">
-    <button class="modal-close" onclick="closeModal('uploadModal')">×</button>
+    <button class="modal-close" aria-label="Close upload dialog" onclick="closeModal('uploadModal')">×</button>
     <div class="modal-title" id="uploadModalTitle">📁 <span data-he>העלאת תוכן</span><span data-en>Upload Content</span></div>
     <div class="modal-subtitle" id="uploadModalSub"><span data-he>העלה תמונות, סרטונים וסיפורים</span><span data-en>Upload photos, videos and stories</span></div>
 
@@ -799,7 +848,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
 <!-- DRIVE SETUP MODAL -->
 <div class="modal-overlay" id="driveSetupModal">
   <div class="modal">
-    <button class="modal-close" onclick="closeModal('driveSetupModal')">×</button>
+    <button class="modal-close" aria-label="Close Drive setup dialog" onclick="closeModal('driveSetupModal')">×</button>
     <div class="modal-title">☁️ <span data-he>הגדרת Google Drive</span><span data-en>Google Drive Setup</span></div>
     <div class="modal-subtitle"><span data-he>הגדר פעם אחת — ואחסן לנצח</span><span data-en>Set up once — store forever</span></div>
     <div class="form-group" style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid rgba(201,168,76,0.2);">
@@ -858,7 +907,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
 <!-- DRIVE GUIDE MODAL -->
 <div class="modal-overlay" id="driveGuideModal">
   <div class="modal" style="max-width:620px;max-height:85vh;overflow-y:auto;">
-    <button class="modal-close" onclick="closeModal('driveGuideModal')">×</button>
+    <button class="modal-close" aria-label="Close Drive guide" onclick="closeModal('driveGuideModal')">×</button>
     <div class="modal-title">📖 <span data-he>מדריך Google Drive</span><span data-en>Google Drive Guide</span></div>
     <div style="font-size:0.88rem;color:var(--sky-light);line-height:2;margin-top:1rem;">
       <div style="color:var(--gold);font-weight:700;margin-bottom:0.5rem;font-size:1rem;" data-he>שלב 1: יצירת פרויקט Google Cloud</div>
@@ -941,7 +990,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
 
 <!-- LIGHTBOX -->
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-  <button class="lightbox-close">×</button>
+  <button class="lightbox-close" aria-label="Close photo viewer">×</button>
   <img id="lightboxImg" src="" alt="">
   <div class="lightbox-caption" id="lightboxCaption"></div>
 </div>
@@ -1432,7 +1481,7 @@ function renderComments() {
           <div class="comment-date">${escapeHtml(dateStr || '')}</div>
         </div>
         ${currentUser?.role==='admin'
-          ? `<button class="btn btn-danger" onclick="removeComment('${id}')">🗑</button>`
+          ? `<button class="btn btn-danger" aria-label="Delete this comment" onclick="removeComment('${id}')">🗑</button>`
           : ''}
       </div>
       <div class="comment-text">${escapeHtml(text)}</div>
@@ -1615,8 +1664,15 @@ function addPhotoToGallery(src, caption, save=true, addSlot=true) {
                 font-size:14px;cursor:pointer;z-index:10;">✕</button>`
     : '';
 
+  // Gallery image alt text — defaults to a meaningful description in the
+  // current language so screen readers don't read "image image image" for
+  // every photo. escapeHtml() guards against quote characters in captions
+  // breaking the alt attribute.
+  const altText = escapeHtml(caption || (lang === 'he'
+    ? 'תמונה של יואב אגמון'
+    : 'Photo of Yoav Agmon'));
   item.innerHTML = `
-    <img class="gallery-img" src="${src}" alt="${caption||''}"
+    <img class="gallery-img" src="${src}" alt="${altText}" loading="lazy"
          onclick="openLightbox(this)"
          onerror="this.parentElement.style.display='none'">
     ${deleteBtn}
