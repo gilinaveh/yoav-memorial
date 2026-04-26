@@ -1,1 +1,12 @@
 .DS_Store
+
+# Node / Playwright
+node_modules/
+playwright-report/
+test-results/
+playwright/.cache/
+
+# Local environment
+.env
+.env.local
+.env.*.local
