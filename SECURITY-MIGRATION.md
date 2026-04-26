@@ -135,22 +135,87 @@ rules deploy is independent.
 
 ---
 
-## What's NOT done in this branch
+## Phase 1 P1 — landed on `feature/security-p1`
 
-These are tracked in the roadmap and deferred to later phases:
+Three more items shipped after the original P0 trio:
 
-- **App Check** (P0-4) — blocks scripts hitting your Firebase project from
-  outside the real domain. Worth enabling once the site is live and you
-  see the domain holds steady.
-- **Content Security Policy headers** (P0-5) — defence-in-depth even if
-  the XSS escape ever has a hole. Belongs at the hosting layer
-  (`_headers` file on Netlify, `vercel.json` on Vercel).
-- **Secrets out of source** (P0-6) — Firebase config is *technically*
-  fine in client source (it's a public identifier), but moving to
-  `.env` per environment makes the dev/staging/prod split possible.
+### CSP headers (P0-5) — applied via meta tag
+
+A `<meta http-equiv="Content-Security-Policy">` is now in `<head>`
+restricting where scripts, styles, fonts, images, and network calls
+can come from. If the XSS escape ever has a hole, the browser still
+won't load attacker-injected resources from arbitrary origins.
+
+To test that nothing is broken:
+
+1. Hard-refresh the deployed site (`Cmd+Shift+R`).
+2. Open the browser console. Look for any line that starts with
+   `Refused to load …` or `Content Security Policy: …` — those are
+   CSP violations.
+3. Click around — light a candle, post a comment, log in as admin,
+   open the upload modal, view a photo in the lightbox.
+4. If you see violations for a real Google domain we forgot to
+   whitelist, add it to the `connect-src` / `script-src` / etc. of
+   the meta tag in `index.html` and redeploy.
+
+GitHub Pages doesn't support custom HTTP headers, so HSTS,
+`X-Frame-Options`, and `Referrer-Policy` will land when the site
+moves to Netlify/Vercel (P1-3 in the roadmap).
+
+### Config extracted to site-config.js (P0-6 — first step)
+
+Firebase + Drive config now lives in `config/site-config.js` and is
+exposed as `window.SITE_CONFIG`. Editing values for a different
+environment is a one-file change. The full `.env` per environment
+(`VITE_FIREBASE_*`) lands when the project gets a Vite build step
+in Phase 2 — at which point `site-config.js` becomes
+`site-config.dev.js` / `.staging.js` / `.prod.js`.
+
+### Firebase App Check (P0-4) — wired but disabled
+
+The code is in place to initialize App Check with reCAPTCHA
+Enterprise, but it's gated on `SITE_CONFIG.appCheck.recaptchaSiteKey`
+being non-null. Default is `null`, so App Check stays off and nothing
+breaks. To turn it on:
+
+1. Open <https://console.cloud.google.com/security/recaptcha?project=yoav-memorial-7a8a3>.
+   Click **Create key** at the top.
+2. **Display name:** `yoav-memorial-prod`.
+   **Platform type:** Website.
+   **Domain list:** add `gilinaveh.github.io` (and your custom
+   domain too if you've added one).
+   **Save**.
+3. After creation, copy the **site key** — it's a long string
+   starting with `6L`.
+4. Open `config/site-config.js`, find the `appCheck` block, replace
+   `null` with the site key in quotes:
+   ```js
+   appCheck: {
+     recaptchaSiteKey: "6Le_paste_your_key_here"
+   }
+   ```
+5. Open the Firebase Console → **App Check** → **Apps** tab →
+   click your web app → **Register**, paste the same site key,
+   save.
+6. **Important — don't enable enforcement yet.** Open the Firebase
+   Console → App Check → **APIs** tab → Cloud Firestore → make sure
+   it's set to **Unenforced** for now. Same for Authentication.
+   Deploy the code, watch the App Check dashboard for a day or two
+   to confirm legitimate traffic is being verified, THEN switch
+   each API to **Enforced**.
+
+If you skip step 6 and enforce immediately, every visitor without a
+valid App Check token gets blocked — including yourself if anything
+is misconfigured. The "watch first, enforce later" pattern is the
+official Firebase recommendation.
+
+---
+
+## Still NOT done
+
 - **Comment moderation queue** (P0-7) — comments still publish
-  immediately. The rules' length caps and XSS escape mean the worst case
-  is now "ugly text" rather than "executes code", but a moderation queue
-  keeps emotional content from surprising the family.
-- **Drive folder sharing audit** (P0-8) — manual review needed on the
-  Drive side; nothing to deploy.
+  immediately. The rules' length caps and XSS escape mean the worst
+  case is now "ugly text" rather than "executes code", but a
+  moderation queue keeps emotional content from surprising the family.
+- **Drive folder sharing audit** (P0-8) — manual review needed on
+  the Drive side; nothing to deploy.
