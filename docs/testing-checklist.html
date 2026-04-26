@@ -343,6 +343,38 @@
         (mobile devices, the Firebase console).
     </div>
 
+    <div class="auto-banner" style="border-color: rgba(201,168,76,0.4); background: linear-gradient(135deg, rgba(201,168,76,0.10), rgba(74,127,165,0.06));">
+        📌 <strong style="color: var(--gold-light);">Project status — last updated April 26, 2026</strong><br>
+        <span style="color: var(--sky-light); font-size: 0.9rem; line-height: 1.7; display: block; margin-top: 8px;">
+            <strong style="color: #7DCEA0;">✓ Shipped:</strong> P0-1 hardcoded passwords removed (Firebase Auth + /admins/{uid}),
+            P0-2 Firestore rules deployed,
+            P0-3 XSS escape on all renderers,
+            P0-4 App Check wired (off by default),
+            P0-5 Content Security Policy via meta,
+            P0-6 config extracted to <code>config/site-config.js</code>,
+            P0-8 Drive sharing audit (decision documented),
+            P1-2 branch protection on <code>main</code> + required Tests check,
+            P1-4 Playwright + GitHub Actions CI (13 specs, all green),
+            P1-6 lazy-load gallery (shimmer + fade-in),
+            P1-7 a11y &amp; SEO pass (OG/Twitter, ARIA, alt, focus, reduced-motion),
+            P1-8 daily automated backup (cron 22:00 UTC, 90-day artifact retention),
+            favicon, README badges.
+        </span>
+        <span style="color: var(--sky-light); font-size: 0.9rem; line-height: 1.7; display: block; margin-top: 8px;">
+            <strong style="color: #F5C16C;">⏳ Next up:</strong>
+            P0-7 comment moderation queue (biggest remaining Phase 1 item),
+            P1-1 Vite + modular refactor,
+            P1-3 Netlify/Vercel hosting migration,
+            P1-5 image CDN (Cloudinary / imgix),
+            or jump to a Phase 3 feature like <em>Hebrew calendar yahrzeit reminders</em>
+            (the most emotionally meaningful remaining item).
+        </span>
+        <span style="color: var(--text-light, #A8C5DA); font-size: 0.82rem; display: block; margin-top: 10px; opacity: 0.8;">
+            Full audit + plan: <a href="memorial-roadmap.html" style="color: var(--gold);">memorial-roadmap.html</a> ·
+            Deploy/admin/backup procedures: <a href="https://github.com/gilinaveh/yoav-memorial/blob/main/SECURITY-MIGRATION.md" target="_blank" style="color: var(--gold);">SECURITY-MIGRATION.md</a>
+        </span>
+    </div>
+
     <div class="phase">
         <div class="phase-title">🔎 Phase 1: Smoke Test</div>
         <div class="phase-desc">Does the page even load? Basic sanity checks before digging deeper.</div>
@@ -600,6 +632,140 @@
                     <strong>Favicon loads (no 404 in network tab)</strong>
                     <div class="steps">DevTools → Network → reload page → look for <code>favicon.svg</code>.</div>
                     <div class="expected">200 OK. The browser tab shows a small gold star.</div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase">
+        <div class="phase-title">🖼️ Phase 8: Lazy-load Gallery (added April 26)</div>
+        <div class="phase-desc">
+            Confirms the shimmer-skeleton + fade-in behaviour from P1-6. The gallery
+            shouldn't fire image requests for off-screen photos until you scroll near them.
+        </div>
+        <ul class="task-list">
+            <li class="task-item">
+                <input type="checkbox" id="t32">
+                <div class="task-content">
+                    <strong>Skeleton shimmer is visible while photos load</strong>
+                    <div class="steps">Hard-refresh the site, scroll quickly to the photos section, watch the grid cells before each image appears.</div>
+                    <div class="expected">Each empty cell shows a soft gold-tinted gradient shimmer animation that loops smoothly. Once the photo decodes, the shimmer disappears and the photo fades in.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t33">
+                <div class="task-content">
+                    <strong>Photos fade in instead of popping</strong>
+                    <div class="steps">DevTools → Network → throttle to "Slow 3G" → reload → scroll to gallery slowly.</div>
+                    <div class="expected">As each image arrives, it transitions from invisible to visible over ~450ms. No jarring pops.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t34">
+                <div class="task-content">
+                    <strong>Off-screen photos don't fire requests until scrolled near</strong>
+                    <div class="steps">DevTools → Network tab → reload → DON'T scroll. Count how many <code>drive.google.com/thumbnail</code> requests appear. Then scroll down. Count again.</div>
+                    <div class="expected">Initial count is small (only above-the-fold thumbnails). Count grows as you scroll. Confirms <code>loading="lazy"</code> is doing its job.</div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase">
+        <div class="phase-title">♿ Phase 9: Accessibility &amp; SEO (added April 26)</div>
+        <div class="phase-desc">
+            Verifies the Open Graph / Twitter Card meta, ARIA labels, alt text, focus
+            rings, and reduced-motion support shipped with P1-7.
+        </div>
+        <ul class="task-list">
+            <li class="task-item">
+                <input type="checkbox" id="t35">
+                <div class="task-content">
+                    <strong>Open Graph preview renders on social</strong>
+                    <div class="steps">Paste <code>https://gilinaveh.github.io/yoav-memorial/</code> into a WhatsApp chat (to yourself), Slack DM, or use <a href="https://www.opengraph.xyz/" target="_blank">opengraph.xyz</a>.</div>
+                    <div class="expected">Preview card shows the title in Hebrew + English and the tagline ("לוחם גולני, חובש, בן, אח, חבר לכולם"). Image will be the favicon star until you upload a 1200×630 photo of Yoav.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t36">
+                <div class="task-content">
+                    <strong>Tab through the page with the keyboard</strong>
+                    <div class="steps">Click somewhere on the page, then press Tab repeatedly. Watch for focus rings.</div>
+                    <div class="expected">A gold outline appears around each focusable element (nav links, login button, language toggle, comment fields, etc.). Mouse clicks should NOT show the ring — only keyboard focus does.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t37">
+                <div class="task-content">
+                    <strong>Screen reader announces buttons by purpose</strong>
+                    <div class="steps">macOS: Cmd+F5 to toggle VoiceOver, hover the close × on the login modal.</div>
+                    <div class="expected">VoiceOver says "Close login dialog, button" — not just "button". Same for the language toggle ("Switch language") and trash icons on comments ("Delete this comment").</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t38">
+                <div class="task-content">
+                    <strong>Gallery images have meaningful alt text</strong>
+                    <div class="steps">DevTools → Inspector → click any photo in the gallery → look at the <code>alt</code> attribute on the <code>&lt;img&gt;</code>.</div>
+                    <div class="expected">Either the actual filename / caption, OR a localized fallback ("Photo of Yoav Agmon" / "תמונה של יואב אגמון") — never an empty string.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t39">
+                <div class="task-content">
+                    <strong>Reduced-motion preference is respected</strong>
+                    <div class="steps">macOS: System Settings → Accessibility → Display → Reduce motion → ON. Reload the site.</div>
+                    <div class="expected">Hero stars stop twinkling, gold emblem stops pulsing, gallery images appear without the fade transition. Static memorial-friendly experience for vestibular-sensitive visitors.</div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase">
+        <div class="phase-title">💾 Phase 10: Daily Automated Backup (added April 26)</div>
+        <div class="phase-desc">
+            Verifies the GitHub Actions backup workflow is healthy. Run this once a month
+            to make sure the cron is still firing and the artifacts are downloadable.
+        </div>
+        <ul class="task-list">
+            <li class="task-item">
+                <input type="checkbox" id="t40">
+                <div class="task-content">
+                    <strong>Latest backup run is green <em class="priority-critical">Critical</em></strong>
+                    <div class="steps">Open <a href="https://github.com/gilinaveh/yoav-memorial/actions/workflows/backup.yml" target="_blank">Actions → Daily Firestore backup</a>. Look at the most recent run.</div>
+                    <div class="expected">Most recent run timestamp is ≤ 24 hours old. Status is green ✓. If it's red or older than 24 hours, the cron has broken — re-run manually and check the FIREBASE_SERVICE_ACCOUNT secret hasn't been rotated.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t41">
+                <div class="task-content">
+                    <strong>Manual workflow_dispatch run succeeds</strong>
+                    <div class="steps">Same workflow page → "Run workflow" → "Run workflow" (green button). Wait ~30 seconds.</div>
+                    <div class="expected">A new run appears at the top, completes green within ~30s. Summary block at the bottom shows the backup file size (~1-5 KB depending on data volume).</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t42">
+                <div class="task-content">
+                    <strong>Artifact downloads and contains valid JSON</strong>
+                    <div class="steps">Click into the run → Summary → scroll to Artifacts → download <code>yoav-memorial-firestore-backup</code>. Unzip → open the .json file in a text editor.</div>
+                    <div class="expected">Top of file: <code>{ "exportedAt": "...", "projectId": "yoav-memorial-7a8a3", "collections": { "candles": [...], ... } }</code>. Counts match what's in the live Firestore.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t43">
+                <div class="task-content">
+                    <strong>Restore script can be invoked locally</strong>
+                    <div class="steps">In your local terminal: <code>FIREBASE_SERVICE_ACCOUNT="$(cat ~/path/to/key.json)" node scripts/restore-firestore.js --help</code> (or with a real backup file pointed at a TEST collection name).</div>
+                    <div class="expected">Script runs, prints usage or restores. <em>Don't run a full restore against production unless you actually need it</em> — it overwrites docs.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t44">
+                <div class="task-content">
+                    <strong>Long-term backup archived monthly (manual habit)</strong>
+                    <div class="steps">Set a calendar reminder for the 1st of each month: download the latest artifact and stash it in Drive / iCloud / external backup. Artifacts auto-delete after 90 days.</div>
+                    <div class="expected">You have at least 12 months of monthly snapshots somewhere off GitHub.</div>
                 </div>
             </li>
         </ul>
