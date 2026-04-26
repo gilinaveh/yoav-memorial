@@ -265,6 +265,51 @@
             width: 0%;
             transition: width 0.3s ease;
         }
+
+        .auto-banner {
+            background: linear-gradient(135deg, rgba(39,174,96,0.10), rgba(201,168,76,0.06));
+            border: 1px solid rgba(39,174,96,0.35);
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+            color: var(--white);
+        }
+        .auto-banner strong { color: #7DCEA0; }
+        .auto-banner code {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', 'SF Mono', monospace;
+            font-size: 0.85em;
+            color: var(--gold-light);
+        }
+        .auto-banner a {
+            color: var(--gold);
+            text-decoration: underline;
+        }
+        .auto-tag {
+            display: inline-block;
+            background: rgba(39,174,96,0.18);
+            color: #7DCEA0;
+            border: 1px solid rgba(39,174,96,0.4);
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 2px 8px;
+            border-radius: 999px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        .priority-hardened {
+            color: #7DCEA0;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-left: 10px;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
@@ -287,6 +332,17 @@
         🌐 Testing site: <a href="https://gilinaveh.github.io/yoav-memorial/" target="_blank">https://gilinaveh.github.io/yoav-memorial/</a>
     </div>
 
+    <div class="auto-banner">
+        🤖 <strong>13 of these checks now run automatically</strong> via Playwright. Run
+        <code>npm test</code> from the repo root to execute them in ~10 seconds. CI also
+        runs them on every push and PR — see the
+        <a href="https://github.com/gilinaveh/yoav-memorial/actions/workflows/test.yml" target="_blank">Tests workflow</a>.
+        Items below tagged <span class="auto-tag">Auto ✓</span> are covered by the suite;
+        the rest still need manual verification because they mutate Firestore (we don't
+        want CI creating real candles every minute) or test things outside the browser
+        (mobile devices, the Firebase console).
+    </div>
+
     <div class="phase">
         <div class="phase-title">🔎 Phase 1: Smoke Test</div>
         <div class="phase-desc">Does the page even load? Basic sanity checks before digging deeper.</div>
@@ -294,17 +350,17 @@
             <li class="task-item">
                 <input type="checkbox" id="t1">
                 <div class="task-content">
-                    <strong>Site loads without errors <em class="priority-critical">Critical</em></strong>
+                    <strong>Site loads without errors <em class="priority-critical">Critical</em><span class="auto-tag">Auto ✓</span></strong>
                     <div class="steps">Open the site URL. Open DevTools → Console tab <em>before</em> clicking anything.</div>
-                    <div class="expected">Page renders fully. Hebrew title, navigation, and star background all visible. No red errors in the Console.</div>
+                    <div class="expected">Page renders fully. Hebrew title, navigation, and star background all visible. No red errors in the Console.<br><em>(Automated: <code>tests/smoke.spec.js</code> — homepage loads with hero name, navigation links present, SITE_CONFIG loaded.)</em></div>
                 </div>
             </li>
             <li class="task-item">
                 <input type="checkbox" id="t2">
                 <div class="task-content">
-                    <strong>Hebrew/English toggle works</strong>
+                    <strong>Hebrew/English toggle works<span class="auto-tag">Auto ✓</span></strong>
                     <div class="steps">Click the "EN" button in the top nav. Then click "עב" to switch back.</div>
-                    <div class="expected">Text switches between Hebrew (RTL) and English (LTR). Layout mirrors correctly.</div>
+                    <div class="expected">Text switches between Hebrew (RTL) and English (LTR). Layout mirrors correctly.<br><em>(Automated: smoke spec verifies <code>html dir</code> and <code>html lang</code> flip correctly.)</em></div>
                 </div>
             </li>
             <li class="task-item">
@@ -318,9 +374,9 @@
             <li class="task-item">
                 <input type="checkbox" id="t4">
                 <div class="task-content">
-                    <strong>Navigation anchors work</strong>
+                    <strong>Navigation anchors work<span class="auto-tag">Auto ✓ (partial)</span></strong>
                     <div class="steps">Click each nav link: סיפורים, נרות זיכרון, תגובות, תמונות, אודות.</div>
-                    <div class="expected">Page scrolls smoothly to each section.</div>
+                    <div class="expected">Page scrolls smoothly to each section.<br><em>(Automated: smoke spec confirms all 6 nav links are present and visible. Smooth-scroll behaviour itself is still manual.)</em></div>
                 </div>
             </li>
         </ul>
@@ -461,6 +517,89 @@
                     <strong>Test on another desktop browser</strong>
                     <div class="steps">Open the site in Firefox or Safari (whichever you don't normally use).</div>
                     <div class="expected">Site renders correctly. Candles/comments/stories work.</div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase">
+        <div class="phase-title">🛡️ Phase 7: Security Hardening Verification (added April 25-26)</div>
+        <div class="phase-desc">
+            Confirms the Phase 1 P0/P1 security migration is live and intact. Run these
+            after every deployment that touches auth, rules, CSP, or the Firebase config.
+        </div>
+        <ul class="task-list">
+            <li class="task-item">
+                <input type="checkbox" id="t23">
+                <div class="task-content">
+                    <strong>Login modal shows "אימייל" not "שם משתמש" <em class="priority-hardened">Migrated</em></strong>
+                    <div class="steps">Click 🔑 / כניסה in the nav.</div>
+                    <div class="expected">Field label is "אימייל" (Email). The plaintext-passwords version had "שם משתמש" (Username) — if you see that, the new code isn't deployed.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t24">
+                <div class="task-content">
+                    <strong>Admin can log in and the admin bar appears <em class="priority-critical">Critical</em></strong>
+                    <div class="steps">Log in with a Firebase Auth admin account (e.g. <code>gilinaveh@gmail.com</code>).</div>
+                    <div class="expected">Welcome toast appears. Admin bar shows at the bottom of the page with edit tools (Photo, Settings, Drive Setup, Backup) and your email/name.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t25">
+                <div class="task-content">
+                    <strong>Non-admin email is rejected with a friendly message</strong>
+                    <div class="steps">Try logging in with an email that's in Firebase Auth but NOT in <code>/admins/{uid}</code>.</div>
+                    <div class="expected">Toast says "this account is not registered as an admin". You're auto-signed-out. No admin bar.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t26">
+                <div class="task-content">
+                    <strong>XSS payload renders as text, not code <em class="priority-critical">Critical</em><span class="auto-tag">Auto ✓</span></strong>
+                    <div class="steps">In the comments form, post a comment with text: <code>&lt;img src=x onerror=alert(1)&gt;</code></div>
+                    <div class="expected">The comment displays the literal string. No alert() pops up. No JS executes.<br><em>(Automated: <code>tests/xss.spec.js</code> covers this against escapeHtml() directly + as a render-time integration test.)</em></div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t27">
+                <div class="task-content">
+                    <strong>Anonymous visitors can still post candles &amp; comments</strong>
+                    <div class="steps">Open the site in an incognito window — make sure you're NOT logged in. Light a candle and post a comment.</div>
+                    <div class="expected">Both succeed. Confirms the anonymous-sign-in fallback works under the new Firestore rules.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t28">
+                <div class="task-content">
+                    <strong>Admin can delete a comment / story</strong>
+                    <div class="steps">Logged in as admin, hover over a test comment — a 🗑 button appears. Click it.</div>
+                    <div class="expected">Comment is removed and gone from Firestore.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t29">
+                <div class="task-content">
+                    <strong>No CSP "Refused to load" errors during normal use</strong>
+                    <div class="steps">Open DevTools Console, hard-refresh, click around (light a candle, view a photo, log in).</div>
+                    <div class="expected">No <code>Content-Security-Policy: …Refused to load…</code> errors. Some <code>www.google.com/sorry</code> warnings under heavy photo load are expected (Drive rate limiting — separate issue, tracked in P1-5/P1-6).</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t30">
+                <div class="task-content">
+                    <strong>Firestore rules block unauthorized writes</strong>
+                    <div class="steps">In DevTools console (logged out / anonymous): try
+                        <code>fbDB.deleteCandle('any-id')</code>.</div>
+                    <div class="expected">The promise rejects with <code>permission-denied</code>. Confirms only admins can delete.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t31">
+                <div class="task-content">
+                    <strong>Favicon loads (no 404 in network tab)</strong>
+                    <div class="steps">DevTools → Network → reload page → look for <code>favicon.svg</code>.</div>
+                    <div class="expected">200 OK. The browser tab shows a small gold star.</div>
                 </div>
             </li>
         </ul>
