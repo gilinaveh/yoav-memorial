@@ -60,32 +60,64 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // ── Comments: { name, relation?, text, dateStr?, createdAt } ──
+    // ── Helpers for the moderation flow (P0-7) ─────────────
+    // Comments and stories are now gated by a status field:
+    //   pending    — submitted by a visitor, not yet visible
+    //   approved   — admin reviewed; visible on the public site
+    //   rejected   — admin reviewed and chose to hide; kept for audit
+    //
+    // Backwards compat: docs created before this rule was deployed
+    // were backfilled to status='approved' by scripts/migrate-add-status.js,
+    // so the public listener's `where status == 'approved'` query catches
+    // both pre-existing and newly-approved entries.
+    function isModeratedStatus(field) {
+      // Admin moderation can move a doc to either approved or rejected.
+      // (Returning to 'pending' is intentionally not allowed — moderation
+      // is a one-way decision, with delete as the escape hatch.)
+      return field == 'approved' || field == 'rejected';
+    }
+    function isOnlyStatusUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && isModeratedStatus(request.resource.data.status);
+    }
+
+    // ── Comments: { name, relation?, text, dateStr?, createdAt, status } ──
     match /comments/{commentId} {
-      allow read: if true;
+      // Public can read approved entries + the rare unmigrated legacy doc
+      // missing the status field. Admins can read everything (pending too)
+      // so the moderation queue can subscribe.
+      allow read: if isAdmin()
+                    || !('status' in resource.data)
+                    || resource.data.status == 'approved';
       allow create: if isSignedIn()
                     && request.resource.data.keys().hasOnly(
-                         ['name', 'relation', 'text', 'dateStr', 'createdAt'])
+                         ['name', 'relation', 'text', 'dateStr', 'createdAt', 'status'])
                     && isShortString(request.resource.data.name, 80)
                     && isOptionalShortString(request.resource.data.relation, 80)
                     && isShortString(request.resource.data.text, 2000)
                     && isOptionalShortString(request.resource.data.dateStr, 40)
-                    && hasServerTimestamp();
-      allow update: if false;
+                    && hasServerTimestamp()
+                    && request.resource.data.status == 'pending';
+      // Admin moderation: flip status pending→approved or →rejected.
+      // Nothing else about the doc may change.
+      allow update: if isAdmin() && isOnlyStatusUpdate();
       allow delete: if isAdmin();
     }
 
-    // ── Stories: { author?, text, dateStr?, createdAt } ──
+    // ── Stories: { author?, text, dateStr?, createdAt, status } ──
     match /stories/{storyId} {
-      allow read: if true;
+      allow read: if isAdmin()
+                    || !('status' in resource.data)
+                    || resource.data.status == 'approved';
       allow create: if isSignedIn()
                     && request.resource.data.keys().hasOnly(
-                         ['author', 'text', 'dateStr', 'createdAt'])
+                         ['author', 'text', 'dateStr', 'createdAt', 'status'])
                     && isOptionalShortString(request.resource.data.author, 80)
                     && isShortString(request.resource.data.text, 5000)
                     && isOptionalShortString(request.resource.data.dateStr, 40)
-                    && hasServerTimestamp();
-      allow update: if false;
+                    && hasServerTimestamp()
+                    && request.resource.data.status == 'pending';
+      allow update: if isAdmin() && isOnlyStatusUpdate();
       allow delete: if isAdmin();
     }
 

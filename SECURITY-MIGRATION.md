@@ -211,14 +211,110 @@ official Firebase recommendation.
 
 ---
 
-## Still NOT done
+## Comment moderation queue (P0-7) — deploy steps
 
-- **Comment moderation queue** (P0-7) — comments still publish
-  immediately. The rules' length caps and XSS escape mean the worst
-  case is now "ugly text" rather than "executes code", but a
-  moderation queue keeps emotional content from surprising the family.
-- ~~**Drive folder sharing audit** (P0-8)~~ — done April 26. Decision
-  recorded below.
+This branch (`feature/moderation-queue`) introduces a `status` field on
+every comment and story:
+
+  - `pending`   — visitor just submitted; not visible on the public site
+  - `approved`  — admin reviewed; appears normally
+  - `rejected`  — admin reviewed and chose to hide; kept for audit
+
+Visitors see a clear "awaiting approval" toast on submit, and a static
+note under the comment form so they're not confused when their post
+doesn't appear immediately. Admins get a new **Moderation Queue** panel
+inside the Messages section (only visible after admin login) with
+Approve / Reject / Delete buttons per pending entry.
+
+### Deploy order — run these in sequence to avoid any visible outage
+
+The site code, the migration, and the new Firestore rules each depend on
+the others, so order matters. Here's the safe sequence:
+
+#### 1. Run the migration (BEFORE merging or publishing rules)
+
+This backfills `status: 'approved'` on every existing comment and story
+so they stay visible after the new rules go live. It's idempotent and
+re-runnable.
+
+```bash
+cd ~/Projects/yoav-memorial
+git checkout feature/moderation-queue   # or wherever the script lives
+
+# Use the same service-account key set up for the daily backup
+export FIREBASE_SERVICE_ACCOUNT="$(cat ~/path/to/service-account.json)"
+
+# Optional preview of what would change
+node scripts/migrate-add-status.js --dry-run
+
+# Actually write
+node scripts/migrate-add-status.js
+```
+
+Expected output:
+
+```
+📥 Backfilling status='approved' on existing docs…
+   /comments    3 migrated, 0 already had status
+   /stories     5 migrated, 0 already had status
+✅ Migration done. Updated 8 docs.
+```
+
+#### 2. Merge the PR
+
+```bash
+git push -u origin feature/moderation-queue
+# → click the URL it prints, open PR, merge
+```
+
+GitHub Pages auto-deploys the new code. At this point:
+
+- Visitors submit with `status='pending'` — but the OLD rules don't
+  enforce that, they're just added.
+- The new public listener queries `where('status', '==', 'approved')`
+  — this still works because step 1 backfilled everything to approved.
+- New submissions are pending; they DON'T appear publicly because the
+  query filters them out — even though the OLD rules would still allow
+  reading them.
+
+So between steps 2 and 3, the moderation queue is "soft": pending
+items are invisible by query but technically readable by rule. Brief
+window with no real exposure since the queries hide them.
+
+#### 3. Publish the new Firestore rules
+
+Open the Firebase Console → Firestore Database → Rules tab. Copy the
+contents of `firestore.rules` from the merged main branch into the
+editor, click Publish. From this point the rules ALSO enforce
+moderation: nobody can read pending entries except admins.
+
+#### 4. Smoke-test as a visitor
+
+In an incognito window:
+
+  - Submit a comment.
+  - You should see the "awaiting approval" toast.
+  - Refresh — your comment is NOT in the list. (Correct! It's pending.)
+
+#### 5. Smoke-test as admin
+
+Log in. Scroll to the Messages section. The new **Moderation Queue**
+panel should be visible below the comment form, listing your test
+comment from step 4. Click **Approve** — the comment should
+disappear from the queue and appear in the public list above. Repeat
+with **Reject** and **Delete** to confirm those buttons work.
+
+### Rolling back
+
+If anything breaks badly:
+
+  - Revert the Firestore rules to the previous version (Firebase
+    Console → Rules → Version history → restore).
+  - Revert the merge commit on `main`. GitHub Pages re-deploys the
+    previous code.
+  - Existing pending docs stay in Firestore (harmless; just not
+    visible to anyone). You can delete them later from the console
+    or with the restore script.
 
 ---
 

@@ -374,6 +374,82 @@ nav {
 .comment-text { font-size: 0.95rem; color: var(--cream); line-height: 1.8; }
 
 .comment-form { background: rgba(255,255,255,0.03); border: 1px solid rgba(201,168,76,0.2); border-radius: var(--radius); padding: 2rem; margin-top: 2rem; }
+
+/* ── Moderation queue (P0-7, admin-only) ───────────────────── */
+.moderation-section {
+  background: linear-gradient(135deg, rgba(243,156,18,0.06), rgba(201,168,76,0.04));
+  border: 1px solid rgba(243,156,18,0.3);
+  border-radius: var(--radius);
+  padding: 2rem;
+  margin-top: 2rem;
+}
+.moderation-section h3 {
+  font-family: 'Frank Ruhl Libre', serif;
+  color: #F5C16C;
+  font-size: 1.25rem;
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.moderation-empty {
+  font-size: 0.9rem;
+  color: var(--sky-light);
+  font-style: italic;
+  padding: 1.25rem 0;
+  text-align: center;
+  opacity: 0.7;
+}
+.moderation-section .pending-item {
+  background: rgba(13,27,42,0.5);
+  border: 1px solid rgba(243,156,18,0.25);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.moderation-section .pending-item:last-child { margin-bottom: 0; }
+.moderation-section .pending-meta {
+  font-size: 0.78rem;
+  color: var(--sky-light);
+  margin-bottom: 0.4rem;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.moderation-section .pending-meta strong { color: #F5C16C; font-weight: 600; }
+.moderation-section .pending-text {
+  color: var(--cream);
+  font-size: 0.95rem;
+  line-height: 1.65;
+  margin-bottom: 0.75rem;
+  white-space: pre-wrap;
+}
+.moderation-section .pending-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.moderation-section .btn-approve {
+  background: rgba(39,174,96,0.18);
+  color: #7DCEA0;
+  border: 1px solid rgba(39,174,96,0.4);
+}
+.moderation-section .btn-approve:hover { background: rgba(39,174,96,0.3); }
+.moderation-section .btn-reject {
+  background: rgba(231,76,60,0.15);
+  color: #FF8B7B;
+  border: 1px solid rgba(231,76,60,0.35);
+}
+.moderation-section .btn-reject:hover { background: rgba(231,76,60,0.25); }
+.moderation-section h4 {
+  font-size: 0.95rem;
+  color: var(--gold-light);
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.moderation-section h4:first-of-type { margin-top: 0.5rem; }
 .form-title { font-family: 'Frank Ruhl Libre', serif; font-size: 1.3rem; color: var(--gold); margin-bottom: 1.25rem; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
 .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
@@ -749,6 +825,33 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
       <textarea id="commentText" placeholder="כתוב מסר לזכרו של יואב..."></textarea>
     </div>
     <button class="btn btn-gold" onclick="submitComment()"><span data-he>שלח מסר</span><span data-en>Send Message</span></button>
+    <p style="font-size:0.78rem;color:var(--text-light);margin-top:0.85rem;text-align:center;">
+      <span data-he>📝 כל מסר עובר אישור מנהל לפני שיופיע באתר</span>
+      <span data-en>📝 Every message is reviewed by an admin before it appears on the site</span>
+    </p>
+  </div>
+
+  <!-- Moderation queue — admin-only, hidden from visitors via .admin-only -->
+  <div class="admin-only moderation-section" id="moderationSection" style="display:none;">
+    <h3>🛡️ <span data-he>תור אישור מסרים</span><span data-en>Moderation Queue</span></h3>
+    <p style="font-size:0.85rem;color:var(--sky-light);margin-bottom:1rem;">
+      <span data-he>אשר או דחה מסרים וסיפורים לפני שהם מופיעים באתר</span>
+      <span data-en>Approve or reject pending messages and stories before they appear on the site</span>
+    </p>
+
+    <h4><span data-he>תגובות ממתינות</span><span data-en>Pending Comments</span> (<span id="pendingCommentsCount">0</span>)</h4>
+    <div id="pendingCommentsContainer">
+      <div class="moderation-empty">
+        <span data-he>אין תגובות ממתינות 👌</span><span data-en>No pending comments 👌</span>
+      </div>
+    </div>
+
+    <h4><span data-he>סיפורים ממתינים</span><span data-en>Pending Stories</span> (<span id="pendingStoriesCount">0</span>)</h4>
+    <div id="pendingStoriesContainer">
+      <div class="moderation-empty">
+        <span data-he>אין סיפורים ממתינים 👌</span><span data-en>No pending stories 👌</span>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -1048,8 +1151,8 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
   import {
-    getFirestore, collection, addDoc, deleteDoc, doc, getDoc,
-    onSnapshot, orderBy, query, serverTimestamp
+    getFirestore, collection, addDoc, deleteDoc, doc, getDoc, updateDoc,
+    onSnapshot, orderBy, query, where, serverTimestamp
   } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
   import {
     getAuth, signInAnonymously, signInWithEmailAndPassword,
@@ -1085,20 +1188,47 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
     }
   }
 
-  const candlesQ  = query(collection(db, 'candles'),  orderBy('createdAt', 'asc'));
-  const commentsQ = query(collection(db, 'comments'), orderBy('createdAt', 'asc'));
-  const storiesQ  = query(collection(db, 'stories'),  orderBy('createdAt', 'asc'));
+  // Public listeners — only show approved comments/stories to visitors.
+  // Admins use the additional onPending* listeners (below) to populate the
+  // moderation queue. Candles aren't moderated because they're just a name.
+  const candlesQ        = query(collection(db, 'candles'),  orderBy('createdAt', 'asc'));
+  const commentsApprovedQ = query(collection(db, 'comments'),
+                              where('status', '==', 'approved'),
+                              orderBy('createdAt', 'asc'));
+  const storiesApprovedQ  = query(collection(db, 'stories'),
+                              where('status', '==', 'approved'),
+                              orderBy('createdAt', 'asc'));
+  const commentsPendingQ  = query(collection(db, 'comments'),
+                              where('status', '==', 'pending'),
+                              orderBy('createdAt', 'asc'));
+  const storiesPendingQ   = query(collection(db, 'stories'),
+                              where('status', '==', 'pending'),
+                              orderBy('createdAt', 'asc'));
 
   const snap = s => s.docs.map(d => ({ id: d.id, ...d.data() }));
 
   window.fbDB = {
-    onCandles : cb => onSnapshot(candlesQ,  s => cb(snap(s)), e => console.error('candles listener:', e)),
-    onComments: cb => onSnapshot(commentsQ, s => cb(snap(s)), e => console.error('comments listener:', e)),
-    onStories : cb => onSnapshot(storiesQ,  s => cb(snap(s)), e => console.error('stories listener:', e)),
+    onCandles : cb => onSnapshot(candlesQ,          s => cb(snap(s)), e => console.error('candles listener:', e)),
+    onComments: cb => onSnapshot(commentsApprovedQ, s => cb(snap(s)), e => console.error('comments listener:', e)),
+    onStories : cb => onSnapshot(storiesApprovedQ,  s => cb(snap(s)), e => console.error('stories listener:', e)),
 
+    // Admin-only — surface pending entries for the moderation queue.
+    // Rules deny these reads for non-admins, so the listener errors out
+    // for unauthenticated/anonymous users; we only call them after login.
+    onPendingComments: cb => onSnapshot(commentsPendingQ, s => cb(snap(s)), e => console.warn('pending comments:', e.code)),
+    onPendingStories : cb => onSnapshot(storiesPendingQ,  s => cb(snap(s)), e => console.warn('pending stories:',  e.code)),
+
+    // New entries always start pending; admin must approve before they
+    // appear on the public site.
     addCandle : name => addDoc(collection(db, 'candles'),  { name, createdAt: serverTimestamp() }),
-    addComment: data => addDoc(collection(db, 'comments'), { ...data, createdAt: serverTimestamp() }),
-    addStory  : data => addDoc(collection(db, 'stories'),  { ...data, createdAt: serverTimestamp() }),
+    addComment: data => addDoc(collection(db, 'comments'), { ...data, status: 'pending', createdAt: serverTimestamp() }),
+    addStory  : data => addDoc(collection(db, 'stories'),  { ...data, status: 'pending', createdAt: serverTimestamp() }),
+
+    // Moderation actions — admin only at the rules layer too.
+    approveComment: id => updateDoc(doc(db, 'comments', id), { status: 'approved' }),
+    rejectComment : id => updateDoc(doc(db, 'comments', id), { status: 'rejected' }),
+    approveStory  : id => updateDoc(doc(db, 'stories',  id), { status: 'approved' }),
+    rejectStory   : id => updateDoc(doc(db, 'stories',  id), { status: 'rejected' }),
 
     deleteCandle : id => deleteDoc(doc(db, 'candles',  id)),
     deleteComment: id => deleteDoc(doc(db, 'comments', id)),
@@ -1425,6 +1555,10 @@ function applyAuth() {
     document.getElementById('adminBar').classList.add('visible');
     document.getElementById('adminBarLabel').textContent = currentUser.name;
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+    // Subscribe to the moderation queue (P0-7). Pulls pending comments
+    // and stories so the admin can approve/reject them. Listener
+    // registration is idempotent — safe to call on every login.
+    subscribeModeration();
   }
 }
 
@@ -1487,7 +1621,12 @@ async function submitComment() {
     document.getElementById('commentName').value = '';
     document.getElementById('commentRelation').value = '';
     document.getElementById('commentText').value = '';
-    showToast(lang==='he' ? '💙 המסר נשמר — תודה שזכרת את יואב' : '💙 Message saved — thank you for remembering Yoav');
+    // Moderation queue (P0-7): admin must approve before the comment is
+    // visible. We tell the visitor explicitly so they don't think it
+    // failed when their post doesn't appear in the list.
+    showToast(lang==='he'
+      ? '💙 תודה — המסר ממתין לאישור מנהל ויופיע בקרוב'
+      : '💙 Thank you — your message is awaiting admin approval and will appear shortly');
   } catch (e) {
     console.error('submitComment failed:', e);
     showToast(lang==='he' ? 'שגיאה בשמירת המסר' : 'Error saving message');
@@ -1535,6 +1674,128 @@ async function removeComment(id) {
   }
 }
 
+// ──────────────────────────────────────────────────────────────
+// SECTION 7b: MODERATION QUEUE (P0-7, admin-only)
+//
+// State for these arrays comes from window.fbDB.onPendingComments
+// /onPendingStories which we subscribe to AFTER admin login. Non-admin
+// readers never call these listeners, and the Firestore rules deny the
+// underlying queries for them anyway.
+// ──────────────────────────────────────────────────────────────
+let pendingCommentsData = [];
+let pendingStoriesData  = [];
+let _moderationSubscribed = false;
+
+function subscribeModeration() {
+  if (_moderationSubscribed || !window.fbDB) return;
+  if (!currentUser || currentUser.role !== 'admin') return;
+  _moderationSubscribed = true;
+  window.fbDB.onPendingComments(data => {
+    pendingCommentsData = data;
+    renderPendingComments();
+  });
+  window.fbDB.onPendingStories(data => {
+    pendingStoriesData = data;
+    renderPendingStories();
+  });
+}
+
+function renderPendingComments() {
+  const container = document.getElementById('pendingCommentsContainer');
+  const countEl   = document.getElementById('pendingCommentsCount');
+  if (!container) return;
+  countEl.textContent = pendingCommentsData.length;
+
+  if (pendingCommentsData.length === 0) {
+    container.innerHTML = `<div class="moderation-empty"><span data-he>אין תגובות ממתינות 👌</span><span data-en>No pending comments 👌</span></div>`;
+    return;
+  }
+  container.innerHTML = '';
+  pendingCommentsData.forEach(({ id, name, relation, text, dateStr }) => {
+    const item = document.createElement('div');
+    item.className = 'pending-item';
+    item.innerHTML = `
+      <div class="pending-meta">
+        <strong>${escapeHtml(name)}</strong>
+        ${relation ? `<span>(${escapeHtml(relation)})</span>` : ''}
+        <span>${escapeHtml(dateStr || '')}</span>
+      </div>
+      <div class="pending-text">${escapeHtml(text)}</div>
+      <div class="pending-actions">
+        <button class="btn btn-approve"  onclick="moderateApprove('comment','${escapeHtml(id)}')">✓ <span data-he>אשר</span><span data-en>Approve</span></button>
+        <button class="btn btn-reject"   onclick="moderateReject('comment','${escapeHtml(id)}')">✕ <span data-he>דחה</span><span data-en>Reject</span></button>
+        <button class="btn btn-danger"   onclick="moderateDelete('comment','${escapeHtml(id)}')">🗑 <span data-he>מחק</span><span data-en>Delete</span></button>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+function renderPendingStories() {
+  const container = document.getElementById('pendingStoriesContainer');
+  const countEl   = document.getElementById('pendingStoriesCount');
+  if (!container) return;
+  countEl.textContent = pendingStoriesData.length;
+
+  if (pendingStoriesData.length === 0) {
+    container.innerHTML = `<div class="moderation-empty"><span data-he>אין סיפורים ממתינים 👌</span><span data-en>No pending stories 👌</span></div>`;
+    return;
+  }
+  container.innerHTML = '';
+  pendingStoriesData.forEach(({ id, author, text, dateStr }) => {
+    const item = document.createElement('div');
+    item.className = 'pending-item';
+    item.innerHTML = `
+      <div class="pending-meta">
+        ${author ? `<strong>${escapeHtml(author)}</strong>` : '<span><em>anonymous</em></span>'}
+        <span>${escapeHtml(dateStr || '')}</span>
+      </div>
+      <div class="pending-text">${escapeHtml(text)}</div>
+      <div class="pending-actions">
+        <button class="btn btn-approve"  onclick="moderateApprove('story','${escapeHtml(id)}')">✓ <span data-he>אשר</span><span data-en>Approve</span></button>
+        <button class="btn btn-reject"   onclick="moderateReject('story','${escapeHtml(id)}')">✕ <span data-he>דחה</span><span data-en>Reject</span></button>
+        <button class="btn btn-danger"   onclick="moderateDelete('story','${escapeHtml(id)}')">🗑 <span data-he>מחק</span><span data-en>Delete</span></button>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+async function moderateApprove(kind, id) {
+  try {
+    if (kind === 'comment') await window.fbDB.approveComment(id);
+    else                    await window.fbDB.approveStory(id);
+    showToast(lang==='he' ? '✅ אושר ופורסם' : '✅ Approved and published');
+  } catch (e) {
+    console.error('moderateApprove failed:', e);
+    showToast(lang==='he' ? 'שגיאה באישור' : 'Error approving');
+  }
+}
+
+async function moderateReject(kind, id) {
+  if (!confirm(lang==='he' ? 'לדחות את המסר? (יישמר אך לא יוצג)' : 'Reject this submission? (kept but hidden)')) return;
+  try {
+    if (kind === 'comment') await window.fbDB.rejectComment(id);
+    else                    await window.fbDB.rejectStory(id);
+    showToast(lang==='he' ? '🚫 נדחה ולא יוצג' : '🚫 Rejected and hidden');
+  } catch (e) {
+    console.error('moderateReject failed:', e);
+    showToast(lang==='he' ? 'שגיאה בדחייה' : 'Error rejecting');
+  }
+}
+
+async function moderateDelete(kind, id) {
+  if (!confirm(lang==='he' ? 'למחוק לצמיתות?' : 'Delete permanently?')) return;
+  try {
+    if (kind === 'comment') await window.fbDB.deleteComment(id);
+    else                    await window.fbDB.deleteStory(id);
+    showToast(lang==='he' ? '🗑 נמחק' : '🗑 Deleted');
+  } catch (e) {
+    console.error('moderateDelete failed:', e);
+    showToast(lang==='he' ? 'שגיאה במחיקה' : 'Error deleting');
+  }
+}
+
 // ══════════════════════════════════════════════════════════════
 // SECTION 8: STORIES
 // Persisted in Firestore `stories`; live-synced via onSnapshot.
@@ -1550,7 +1811,10 @@ async function addStory() {
     await window.fbDB.addStory({ author, text, dateStr });
     document.getElementById('storyAuthor').value = '';
     document.getElementById('storyText').value   = '';
-    showToast(lang==='he' ? '✨ הסיפור פורסם' : '✨ Story published');
+    // Same moderation flow as comments — admin must approve.
+    showToast(lang==='he'
+      ? '✨ תודה — הסיפור ממתין לאישור מנהל'
+      : '✨ Thank you — your story is awaiting admin approval');
   } catch (e) {
     console.error('addStory failed:', e);
     showToast(lang==='he' ? 'שגיאה בפרסום הסיפור' : 'Error publishing story');
