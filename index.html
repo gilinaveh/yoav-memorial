@@ -31,6 +31,16 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="alternate icon" href="favicon.svg">
 
+<!-- Leaflet — interactive map for "Yoav's Places" (P3-1).
+     Pinned to a specific version so a future Leaflet release can't
+     silently change tile rendering or break our integration. -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin="">
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+
 <!-- ────────────────────────────────────────────────────────────
      Content Security Policy (P0-5).
 
@@ -51,10 +61,10 @@
      ──────────────────────────────────────────────────────────── -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
-  script-src  'self' 'unsafe-inline' https://www.gstatic.com https://accounts.google.com https://apis.google.com https://www.google.com https://www.gstatic.com/recaptcha/;
-  style-src   'self' 'unsafe-inline' https://fonts.googleapis.com;
+  script-src  'self' 'unsafe-inline' https://www.gstatic.com https://accounts.google.com https://apis.google.com https://www.google.com https://www.gstatic.com/recaptcha/ https://unpkg.com;
+  style-src   'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com;
   font-src    'self' https://fonts.gstatic.com;
-  img-src     'self' data: blob: https://drive.google.com https://lh3.googleusercontent.com https://*.googleusercontent.com https://www.google.com;
+  img-src     'self' data: blob: https://drive.google.com https://lh3.googleusercontent.com https://*.googleusercontent.com https://www.google.com https://*.tile.openstreetmap.org https://unpkg.com;
   connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://www.googleapis.com https://oauth2.googleapis.com https://securetoken.googleapis.com https://accounts.google.com https://content-firebaseappcheck.googleapis.com https://firebaseappcheck.googleapis.com;
   frame-src   https://accounts.google.com https://yoav-memorial-7a8a3.firebaseapp.com https://www.google.com;
   base-uri    'self';
@@ -576,6 +586,99 @@ footer { position: relative; z-index: 1; text-align: center; padding: 3rem 2rem 
 /* Section sep */
 .section-sep { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, rgba(201,168,76,0.2), transparent); max-width: 1100px; margin: 0 auto; }
 
+/* ── Yoav's Places map (P3-1) ─────────────────────────────── */
+#placesMap {
+  width: 100%;
+  height: 480px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(201,168,76,0.25);
+  overflow: hidden;
+  margin-bottom: 1rem;
+  /* Leaflet wants a deterministic height before init — the container
+     must have non-zero dimensions or tiles silently fail to load. */
+  min-height: 320px;
+  background: rgba(13,27,42,0.6);
+}
+#placesMap.add-mode { cursor: crosshair; }
+
+/* Custom gold pin to match the rest of the site palette. The Leaflet
+   default blue marker would clash with the deep-blue+gold theme. */
+.yoav-pin {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, var(--gold-light), var(--gold) 60%, var(--gold-dark) 100%);
+  border: 2px solid var(--white);
+  box-shadow: 0 0 12px rgba(201,168,76,0.55), 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Leaflet popup styled to match the site's dark theme */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--navy);
+  color: var(--cream);
+  border: 1px solid rgba(201,168,76,0.3);
+}
+.leaflet-popup-content { margin: 0.85rem 1rem; min-width: 200px; max-width: 280px; }
+.leaflet-popup-content h4 {
+  font-family: 'Frank Ruhl Libre', serif;
+  color: var(--gold-light);
+  font-size: 1.05rem;
+  margin: 0 0 0.4rem;
+}
+.leaflet-popup-content p {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--cream);
+  margin: 0;
+}
+.leaflet-popup-content img {
+  width: 100%;
+  border-radius: 6px;
+  margin: 0.5rem 0 0.6rem;
+  display: block;
+}
+.leaflet-popup-content .place-actions {
+  margin-top: 0.6rem;
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.leaflet-popup-content .place-actions .btn {
+  font-size: 0.74rem;
+  padding: 0.3rem 0.7rem;
+}
+.leaflet-container a.leaflet-popup-close-button { color: var(--gold-light); }
+
+.places-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+.places-count {
+  font-size: 0.85rem;
+  color: var(--sky-light);
+}
+.places-count span:first-child {
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-inline-end: 0.25rem;
+}
+.places-hint {
+  margin-top: 0.85rem;
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--gold-light);
+  background: rgba(201,168,76,0.08);
+  border: 1px dashed rgba(201,168,76,0.35);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+}
+
 /* ── Yahrzeit section (P3-4) ──────────────────────────────── */
 .yahrzeit-card {
   max-width: 640px;
@@ -738,6 +841,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
     <a href="#about" data-he>אודות</a><a href="#about" data-en>About</a>
     <a href="#gallery" data-he>תמונות</a><a href="#gallery" data-en>Gallery</a>
     <a href="#timeline" data-he>ציר זמן</a><a href="#timeline" data-en>Timeline</a>
+    <a href="#places" data-he>מקומות</a><a href="#places" data-en>Places</a>
     <a href="#stories" data-he>סיפורים</a><a href="#stories" data-en>Stories</a>
     <a href="#candles" data-he>נרות זיכרון</a><a href="#candles" data-en>Candles</a>
     <a href="#comments" data-he>תגובות</a><a href="#comments" data-en>Comments</a>
@@ -864,6 +968,73 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
     </button>
   </div>
 </section>
+
+<!-- YOAV'S MAP (P3-1) -->
+<div class="section-sep"></div>
+<section class="section" id="places">
+  <h2 class="section-title"><span data-he>המקומות של יואב</span><span data-en>Yoav's Places</span></h2>
+  <p class="section-subtitle"><span data-he>מקומות שאהב, חופים, שבילים, פינות שלו</span><span data-en>Places he loved — beaches, trails, his corners of the world</span></p>
+  <div class="divider"></div>
+
+  <!-- The Leaflet map mounts here. Height is set in CSS so the
+       container has dimensions before Leaflet initializes — without
+       it, the map renders 0×0 and tiles never load. -->
+  <div id="placesMap" role="region" aria-label="Map of meaningful places"></div>
+
+  <div class="places-meta">
+    <div class="places-count"><span id="placesCount">0</span> <span data-he>מקומות</span><span data-en>places</span></div>
+    <div class="admin-only" style="display:none;">
+      <button class="btn btn-gold" id="addPlaceBtn" onclick="startAddPlace()">
+        ➕ <span data-he>הוסף מקום</span><span data-en>Add a place</span>
+      </button>
+      <button class="btn btn-outline" id="cancelAddPlaceBtn" onclick="cancelAddPlace()" style="display:none;">
+        <span data-he>ביטול</span><span data-en>Cancel</span>
+      </button>
+    </div>
+  </div>
+  <div class="places-hint admin-only" id="placesHint" style="display:none;">
+    <span data-he>לחצו על המפה כדי לסמן מיקום</span>
+    <span data-en>Click anywhere on the map to drop a pin</span>
+  </div>
+</section>
+
+<!-- ADD-PLACE MODAL -->
+<div class="modal-overlay" id="placeModal">
+  <div class="modal">
+    <button class="modal-close" aria-label="Close add-place dialog" onclick="closeModal('placeModal')">×</button>
+    <div class="modal-title">📍 <span data-he>מקום חדש</span><span data-en>New Place</span></div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label><span data-he>שם המקום</span><span data-en>Place name</span></label>
+      <input id="placeName" type="text" placeholder="חוף הבונים, שביל הגולן…">
+    </div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label><span data-he>הסיפור (אופציונלי)</span><span data-en>The story (optional)</span></label>
+      <textarea id="placeStory" placeholder="מה היה לו פה?"></textarea>
+    </div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label><span data-he>קישור לתמונה (אופציונלי)</span><span data-en>Photo URL (optional)</span></label>
+      <input id="placePhoto" type="url" placeholder="https://…">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label><span data-he>קו רוחב</span><span data-en>Latitude</span></label>
+        <input id="placeLat" type="number" step="0.0001" placeholder="32.08">
+      </div>
+      <div class="form-group">
+        <label><span data-he>קו אורך</span><span data-en>Longitude</span></label>
+        <input id="placeLng" type="number" step="0.0001" placeholder="34.78">
+      </div>
+    </div>
+    <div style="display:flex;gap:0.6rem;margin-top:1.5rem;">
+      <button class="btn btn-gold" style="flex:1;" onclick="savePlace()">
+        💾 <span data-he>שמירה</span><span data-en>Save</span>
+      </button>
+      <button class="btn btn-outline" onclick="closeModal('placeModal')">
+        <span data-he>ביטול</span><span data-en>Cancel</span>
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- STORIES -->
 <div class="section-sep"></div>
@@ -1336,6 +1507,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
   // Public listeners — only show approved comments/stories to visitors.
   // Admins use the additional onPending* listeners (below) to populate the
   // moderation queue. Candles aren't moderated because they're just a name.
+  const placesQ        = query(collection(db, 'places'),   orderBy('createdAt', 'asc'));
   const candlesQ        = query(collection(db, 'candles'),  orderBy('createdAt', 'asc'));
   const commentsApprovedQ = query(collection(db, 'comments'),
                               where('status', '==', 'approved'),
@@ -1356,6 +1528,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
     onCandles : cb => onSnapshot(candlesQ,          s => cb(snap(s)), e => console.error('candles listener:', e)),
     onComments: cb => onSnapshot(commentsApprovedQ, s => cb(snap(s)), e => console.error('comments listener:', e)),
     onStories : cb => onSnapshot(storiesApprovedQ,  s => cb(snap(s)), e => console.error('stories listener:', e)),
+    onPlaces  : cb => onSnapshot(placesQ,           s => cb(snap(s)), e => console.error('places listener:', e)),
 
     // Admin-only — surface pending entries for the moderation queue.
     // Rules deny these reads for non-admins, so the listener errors out
@@ -1374,6 +1547,11 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
     rejectComment : id => updateDoc(doc(db, 'comments', id), { status: 'rejected' }),
     approveStory  : id => updateDoc(doc(db, 'stories',  id), { status: 'approved' }),
     rejectStory   : id => updateDoc(doc(db, 'stories',  id), { status: 'rejected' }),
+
+    // Places (Yoav's Map) — admin-only writes
+    addPlace   : data => addDoc(collection(db, 'places'),    { ...data, createdAt: serverTimestamp() }),
+    updatePlace: (id, data) => updateDoc(doc(db, 'places', id), data),
+    deletePlace: id => deleteDoc(doc(db, 'places', id)),
 
     deleteCandle : id => deleteDoc(doc(db, 'candles',  id)),
     deleteComment: id => deleteDoc(doc(db, 'comments', id)),
@@ -2562,6 +2740,213 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
 });
 
 // ══════════════════════════════════════════════════════════════
+// SECTION 20.4: YOAV'S MAP (P3-1)
+//
+// Leaflet-based interactive map. Pins live in Firestore /places.
+// Public can view; only admins can add / edit / delete (rules
+// enforce this server-side).
+//
+// Visitor flow:   load map → see gold pins → click pin → popup
+// Admin flow:     '+ Add Place' → click on map → modal form → save
+// ══════════════════════════════════════════════════════════════
+
+let placesMap          = null;      // Leaflet map instance
+let placesLayer        = null;      // L.layerGroup holding all pins
+let placesData         = [];        // mirror of Firestore /places
+let pendingAddPlace    = null;      // { lat, lng } while waiting for the modal
+let placeBeingEdited   = null;      // doc id during edit, else null
+
+// Israel-centred initial view; the map auto-fits when pins load.
+const PLACES_INITIAL_CENTER = [31.7, 35.0];   // ~middle of Israel
+const PLACES_INITIAL_ZOOM   = 7;
+
+function initPlacesMap() {
+  if (placesMap) return;                       // idempotent
+  if (typeof L === 'undefined') {              // Leaflet not loaded yet
+    console.warn('Leaflet not yet loaded; will retry');
+    return;
+  }
+  const el = document.getElementById('placesMap');
+  if (!el) return;
+
+  placesMap = L.map(el, { scrollWheelZoom: false }).setView(PLACES_INITIAL_CENTER, PLACES_INITIAL_ZOOM);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(placesMap);
+
+  placesLayer = L.layerGroup().addTo(placesMap);
+
+  // While in 'add place' mode the next click on the map captures
+  // its lat/lng and opens the modal pre-filled with those coords.
+  placesMap.on('click', e => {
+    if (!pendingAddPlace) return;
+    pendingAddPlace = { lat: e.latlng.lat, lng: e.latlng.lng };
+    openPlaceModal();
+  });
+}
+
+function makeYoavPinIcon() {
+  // Custom DivIcon — keeps us in our gold/navy palette and avoids
+  // Leaflet's default blue-marker assets entirely.
+  return L.divIcon({
+    className:  'yoav-pin-wrap',
+    html:       '<div class="yoav-pin"></div>',
+    iconSize:   [22, 22],
+    iconAnchor: [11, 11],
+    popupAnchor:[0, -8]
+  });
+}
+
+function placePopupHtml(p) {
+  // All visitor-controlled fields go through escapeHtml. The doc id
+  // does too, defensively, even though Firestore IDs are alphanumeric.
+  const isAdmin = currentUser?.role === 'admin';
+  const photo   = p.photoUrl
+    ? `<img src="${escapeHtml(p.photoUrl)}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="this.style.display='none'">`
+    : '';
+  const story   = p.story ? `<p>${escapeHtml(p.story)}</p>` : '';
+  const actions = isAdmin
+    ? `<div class="place-actions">
+         <button class="btn btn-outline" onclick="editPlace('${escapeHtml(p.id)}')">✎ <span data-he>עריכה</span><span data-en>Edit</span></button>
+         <button class="btn btn-danger"  onclick="deletePlaceConfirm('${escapeHtml(p.id)}')">🗑 <span data-he>מחיקה</span><span data-en>Delete</span></button>
+       </div>`
+    : '';
+  return `<h4>${escapeHtml(p.name)}</h4>${photo}${story}${actions}`;
+}
+
+function renderPlaces() {
+  if (!placesMap || !placesLayer) return;
+  placesLayer.clearLayers();
+
+  document.getElementById('placesCount').textContent = placesData.length;
+
+  const validPins = placesData.filter(p =>
+    typeof p.lat === 'number' && typeof p.lng === 'number'
+  );
+
+  validPins.forEach(p => {
+    const marker = L.marker([p.lat, p.lng], { icon: makeYoavPinIcon() });
+    marker.bindPopup(placePopupHtml(p), { maxWidth: 300 });
+    marker.addTo(placesLayer);
+  });
+
+  // Auto-fit only when there are pins and only on the very first
+  // render — otherwise the view jumps every time anything changes.
+  if (validPins.length > 0 && !placesMap._fittedOnce) {
+    placesMap._fittedOnce = true;
+    const bounds = L.latLngBounds(validPins.map(p => [p.lat, p.lng]));
+    placesMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
+  }
+}
+
+// ── Admin actions ──────────────────────────────────────────────
+
+function startAddPlace() {
+  if (!currentUser || currentUser.role !== 'admin') return;
+  pendingAddPlace = {};                                  // sentinel — empty object signals "waiting for click"
+  document.getElementById('placesMap').classList.add('add-mode');
+  document.getElementById('addPlaceBtn').style.display = 'none';
+  document.getElementById('cancelAddPlaceBtn').style.display = '';
+  document.getElementById('placesHint').style.display = 'block';
+  showToast(lang === 'he'
+    ? '👆 לחצו על המפה כדי לסמן את המיקום'
+    : '👆 Click on the map to drop a pin');
+}
+
+function cancelAddPlace() {
+  pendingAddPlace  = null;
+  placeBeingEdited = null;
+  document.getElementById('placesMap').classList.remove('add-mode');
+  document.getElementById('addPlaceBtn').style.display = '';
+  document.getElementById('cancelAddPlaceBtn').style.display = 'none';
+  document.getElementById('placesHint').style.display = 'none';
+}
+
+function openPlaceModal() {
+  // Pre-fill the lat/lng from pendingAddPlace if present (add mode),
+  // or from the existing doc if we're editing.
+  const nameEl  = document.getElementById('placeName');
+  const storyEl = document.getElementById('placeStory');
+  const photoEl = document.getElementById('placePhoto');
+  const latEl   = document.getElementById('placeLat');
+  const lngEl   = document.getElementById('placeLng');
+
+  if (placeBeingEdited) {
+    const p = placesData.find(x => x.id === placeBeingEdited);
+    if (!p) return;
+    nameEl.value  = p.name || '';
+    storyEl.value = p.story || '';
+    photoEl.value = p.photoUrl || '';
+    latEl.value   = p.lat ?? '';
+    lngEl.value   = p.lng ?? '';
+  } else {
+    nameEl.value  = '';
+    storyEl.value = '';
+    photoEl.value = '';
+    latEl.value   = pendingAddPlace?.lat?.toFixed(5) ?? '';
+    lngEl.value   = pendingAddPlace?.lng?.toFixed(5) ?? '';
+  }
+  document.getElementById('placeModal').classList.add('open');
+  setTimeout(() => nameEl.focus(), 50);
+}
+
+function editPlace(id) {
+  if (!currentUser || currentUser.role !== 'admin') return;
+  placeBeingEdited = id;
+  pendingAddPlace = null;
+  openPlaceModal();
+}
+
+async function savePlace() {
+  const name     = document.getElementById('placeName').value.trim();
+  const story    = document.getElementById('placeStory').value.trim();
+  const photoUrl = document.getElementById('placePhoto').value.trim();
+  const lat      = parseFloat(document.getElementById('placeLat').value);
+  const lng      = parseFloat(document.getElementById('placeLng').value);
+
+  if (!name) {
+    showToast(lang === 'he' ? 'שם המקום חסר' : 'Place name is required');
+    return;
+  }
+  if (Number.isNaN(lat) || Number.isNaN(lng)) {
+    showToast(lang === 'he' ? 'קואורדינטות לא תקינות' : 'Coordinates are invalid');
+    return;
+  }
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    showToast(lang === 'he' ? 'קואורדינטות מחוץ לטווח' : 'Coordinates out of range');
+    return;
+  }
+
+  try {
+    if (placeBeingEdited) {
+      await window.fbDB.updatePlace(placeBeingEdited, { name, story, photoUrl, lat, lng });
+      showToast(lang === 'he' ? '✅ עודכן' : '✅ Updated');
+    } else {
+      await window.fbDB.addPlace({ name, story, photoUrl, lat, lng });
+      showToast(lang === 'he' ? '📍 מקום נוסף' : '📍 Place added');
+    }
+    closeModal('placeModal');
+    cancelAddPlace();
+  } catch (e) {
+    console.error('savePlace failed:', e);
+    showToast(lang === 'he' ? 'שגיאה בשמירה' : 'Error saving place');
+  }
+}
+
+async function deletePlaceConfirm(id) {
+  if (!currentUser || currentUser.role !== 'admin') return;
+  if (!confirm(lang === 'he' ? 'למחוק את המקום?' : 'Delete this place?')) return;
+  try {
+    await window.fbDB.deletePlace(id);
+    showToast(lang === 'he' ? '🗑 נמחק' : '🗑 Deleted');
+  } catch (e) {
+    console.error('deletePlace failed:', e);
+    showToast(lang === 'he' ? 'שגיאה במחיקה' : 'Error deleting');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
 // SECTION 20.5: HEBREW CALENDAR / YAHRZEIT (P3-4)
 //
 // Uses native Intl.DateTimeFormat with the Hebrew calendar — no
@@ -2808,6 +3193,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     window.fbDB.onCandles(data  => { candlesData  = data; renderCandles();  });
     window.fbDB.onComments(data => { commentsData = data; renderComments(); });
     window.fbDB.onStories(data  => { storiesData  = data; renderStories();  });
+    window.fbDB.onPlaces(data   => { placesData   = data; renderPlaces();   });
   } else {
     console.error('Firebase bridge (window.fbDB) not initialized — check the module script.');
   }
@@ -2815,6 +3201,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Yahrzeit countdown + footer Hebrew date (P3-4). No network calls,
   // no Firebase dependency — purely Intl-based, runs on every load.
   renderYahrzeit();
+
+  // Yoav's Map (P3-1). Leaflet is loaded with `defer` — DOMContentLoaded
+  // fires after deferred scripts finish, so L is guaranteed available
+  // here. The init is idempotent if called twice.
+  initPlacesMap();
+  if (placesData.length > 0) renderPlaces();
 
   await loadPhotosFromDrive();
 });

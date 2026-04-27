@@ -121,6 +121,32 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ── Places: pinned spots on Yoav's Map (P3-1) ──
+    //   { name, story?, photoUrl?, lat, lng, createdAt }
+    // Public can view all pins. Only admins can add/edit/delete —
+    // no public submissions in this MVP. (Visitor-submitted pins
+    // could be added later by mirroring the comments moderation flow.)
+    match /places/{placeId} {
+      allow read: if true;
+      allow create: if isAdmin()
+                    && request.resource.data.keys().hasOnly(
+                         ['name', 'story', 'photoUrl', 'lat', 'lng', 'createdAt'])
+                    && isShortString(request.resource.data.name, 80)
+                    && isOptionalShortString(request.resource.data.story, 2000)
+                    && isOptionalShortString(request.resource.data.photoUrl, 500)
+                    && request.resource.data.lat is number
+                    && request.resource.data.lat >= -90
+                    && request.resource.data.lat <= 90
+                    && request.resource.data.lng is number
+                    && request.resource.data.lng >= -180
+                    && request.resource.data.lng <= 180
+                    && hasServerTimestamp();
+      allow update: if isAdmin()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['name', 'story', 'photoUrl', 'lat', 'lng']);
+      allow delete: if isAdmin();
+    }
+
     // ── Admins: read your own doc, never write from the client ──
     // Bootstrap by creating these in the Firebase Console.
     match /admins/{uid} {
