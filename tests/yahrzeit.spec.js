@@ -76,6 +76,42 @@ test.describe('Yahrzeit', () => {
     expect(result.future).toBe(true);
   });
 
+  test('googleCalendarUrl produces a valid prefill URL', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForFunction(() => typeof googleCalendarUrl === 'function');
+    const url = await page.evaluate(() => {
+      const next = nextYahrzeit() || new Date();
+      return googleCalendarUrl(next);
+    });
+    // Must point at calendar.google.com's render endpoint with the
+    // template action so visitors land on a pre-filled "save" view.
+    expect(url).toContain('https://calendar.google.com/calendar/render');
+    expect(url).toContain('action=TEMPLATE');
+    // Title and dates and description fields must all be present
+    expect(url).toMatch(/text=[^&]+yahrzeit/i);
+    expect(url).toMatch(/dates=\d{8}%2F\d{8}|dates=\d{8}\/\d{8}/);
+    expect(url).toContain('details=');
+  });
+
+  test('Add-to-Google-Calendar button is present and renders before the .ics fallback', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForFunction(() => {
+      const c = document.getElementById('yahrzeitContent');
+      return c && c.children.length > 0;
+    });
+    // Skip when it's the actual yahrzeit day (the buttons are hidden in
+    // favour of the memorial banner).
+    const isYahrzeit = await page.evaluate(() => isYahrzeitToday());
+    test.skip(isYahrzeit, 'On the yahrzeit day itself the buttons are replaced by the memorial banner');
+
+    const buttons = page.locator('.yahrzeit-cal-buttons .btn');
+    await expect(buttons).toHaveCount(2);
+    // First button is the Google Calendar primary
+    await expect(buttons.first()).toHaveClass(/btn-gold/);
+    // Second is the .ics download
+    await expect(buttons.nth(1)).toHaveClass(/btn-outline/);
+  });
+
   test('buildYahrzeitICS produces a valid RFC 5545 calendar', async ({ page }) => {
     await page.goto('/');
     await page.waitForFunction(() => typeof buildYahrzeitICS === 'function');

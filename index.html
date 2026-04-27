@@ -639,11 +639,23 @@ footer { position: relative; z-index: 1; text-align: center; padding: 3rem 2rem 
   margin: 0 0.25rem;
 }
 .yahrzeit-card .btn {
-  margin-top: 0.4rem;
   display: inline-flex;
   gap: 0.5rem;
   align-items: center;
 }
+.yahrzeit-cal-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  justify-content: center;
+  margin-top: 0.4rem;
+}
+.yahrzeit-cal-buttons .btn-outline {
+  font-size: 0.85rem;
+  padding: 0.55rem 1.1rem;
+  opacity: 0.85;
+}
+.yahrzeit-cal-buttons .btn-outline:hover { opacity: 1; }
 
 /* The day-of banner replaces the countdown when isYahrzeitToday() is true */
 .yahrzeit-day-banner {
@@ -2661,6 +2673,35 @@ function downloadYahrzeitICS() {
     : '📅 Downloaded — open the file to add to your calendar');
 }
 
+function googleCalendarUrl(date) {
+  // Build a calendar.google.com event-prefill URL for an all-day event
+  // on the given Gregorian date. The dates parameter format for all-day
+  // events is YYYYMMDD/YYYYMMDD (end is exclusive, so we add a day).
+  const pad = n => String(n).padStart(2, '0');
+  const yyyymmdd = d => `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`;
+  const start = yyyymmdd(date);
+  const end   = yyyymmdd(new Date(date.getTime() + 86400000));
+
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text:   '🕯️ יום הזיכרון של יואב אגמון / Yoav Agmon yahrzeit',
+    dates:  `${start}/${end}`,
+    details:
+      "11 בתשרי (לוח עברי) — Hebrew anniversary of Yoav's passing.\n\n" +
+      "Light a candle in his memory.\n" +
+      "https://gilinaveh.github.io/yoav-memorial/"
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+function openGoogleCalendar() {
+  const next = nextYahrzeit();
+  if (!next) return;
+  // window.open with _blank pops a new tab pre-filled with the event;
+  // the visitor just clicks "Save" in Google Calendar's UI.
+  window.open(googleCalendarUrl(next), '_blank', 'noopener,noreferrer');
+}
+
 function renderYahrzeit() {
   // Today's Hebrew date — runs every render so it stays correct across
   // midnight crossings.
@@ -2722,9 +2763,14 @@ function renderYahrzeit() {
         <span data-en><strong>${days}</strong> days from now</span>
       </div>
     </div>
-    <button class="btn btn-gold" onclick="downloadYahrzeitICS()" aria-label="Add Yoav's yahrzeit to your calendar">
-      📅 <span data-he>הוסיפו ליומן שלכם</span><span data-en>Add to my Calendar</span>
-    </button>
+    <div class="yahrzeit-cal-buttons">
+      <button class="btn btn-gold" onclick="openGoogleCalendar()" aria-label="Add Yoav's yahrzeit to Google Calendar">
+        📅 <span data-he>הוספה ליומן Google</span><span data-en>Add to Google Calendar</span>
+      </button>
+      <button class="btn btn-outline" onclick="downloadYahrzeitICS()" aria-label="Download an .ics calendar file (works with Apple Calendar, Outlook, and other calendar apps)">
+        ⬇ <span data-he>הורדת קובץ .ics (Apple / Outlook)</span><span data-en>Download .ics (Apple / Outlook)</span>
+      </button>
+    </div>
   `;
 }
 
