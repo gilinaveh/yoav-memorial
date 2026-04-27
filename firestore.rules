@@ -70,12 +70,15 @@ service cloud.firestore {
     // were backfilled to status='approved' by scripts/migrate-add-status.js,
     // so the public listener's `where status == 'approved'` query catches
     // both pre-existing and newly-approved entries.
-    function isApprovedStatus(field) {
+    function isModeratedStatus(field) {
+      // Admin moderation can move a doc to either approved or rejected.
+      // (Returning to 'pending' is intentionally not allowed — moderation
+      // is a one-way decision, with delete as the escape hatch.)
       return field == 'approved' || field == 'rejected';
     }
     function isOnlyStatusUpdate() {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
-        && isApprovedStatus(request.resource.data.status);
+        && isModeratedStatus(request.resource.data.status);
     }
 
     // ── Comments: { name, relation?, text, dateStr?, createdAt, status } ──

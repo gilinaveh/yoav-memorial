@@ -1722,9 +1722,9 @@ function renderPendingComments() {
       </div>
       <div class="pending-text">${escapeHtml(text)}</div>
       <div class="pending-actions">
-        <button class="btn btn-approve"  onclick="moderateApprove('comment','${id}')">✓ <span data-he>אשר</span><span data-en>Approve</span></button>
-        <button class="btn btn-reject"   onclick="moderateReject('comment','${id}')">✕ <span data-he>דחה</span><span data-en>Reject</span></button>
-        <button class="btn btn-danger"   onclick="moderateDelete('comment','${id}')">🗑 <span data-he>מחק</span><span data-en>Delete</span></button>
+        <button class="btn btn-approve"  onclick="moderateApprove('comment','${escapeHtml(id)}')">✓ <span data-he>אשר</span><span data-en>Approve</span></button>
+        <button class="btn btn-reject"   onclick="moderateReject('comment','${escapeHtml(id)}')">✕ <span data-he>דחה</span><span data-en>Reject</span></button>
+        <button class="btn btn-danger"   onclick="moderateDelete('comment','${escapeHtml(id)}')">🗑 <span data-he>מחק</span><span data-en>Delete</span></button>
       </div>
     `;
     container.appendChild(item);
@@ -1752,9 +1752,9 @@ function renderPendingStories() {
       </div>
       <div class="pending-text">${escapeHtml(text)}</div>
       <div class="pending-actions">
-        <button class="btn btn-approve"  onclick="moderateApprove('story','${id}')">✓ <span data-he>אשר</span><span data-en>Approve</span></button>
-        <button class="btn btn-reject"   onclick="moderateReject('story','${id}')">✕ <span data-he>דחה</span><span data-en>Reject</span></button>
-        <button class="btn btn-danger"   onclick="moderateDelete('story','${id}')">🗑 <span data-he>מחק</span><span data-en>Delete</span></button>
+        <button class="btn btn-approve"  onclick="moderateApprove('story','${escapeHtml(id)}')">✓ <span data-he>אשר</span><span data-en>Approve</span></button>
+        <button class="btn btn-reject"   onclick="moderateReject('story','${escapeHtml(id)}')">✕ <span data-he>דחה</span><span data-en>Reject</span></button>
+        <button class="btn btn-danger"   onclick="moderateDelete('story','${escapeHtml(id)}')">🗑 <span data-he>מחק</span><span data-en>Delete</span></button>
       </div>
     `;
     container.appendChild(item);
