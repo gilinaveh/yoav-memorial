@@ -147,6 +147,29 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ── Letters: Time Capsule (P3-6) ──
+    //   { author, text, revealDate (timestamp), createdAt }
+    // Letters are sealed — visible only on/after their revealDate.
+    // Admins can see all letters at any time so they can manage the
+    // queue (counter, deletion, etc.) and verify what they wrote.
+    //
+    // The public listener uses where('revealDate', '<=', now) which
+    // returns only docs whose read rule already passes — visitors
+    // never see sealed content even if their browser tries.
+    match /letters/{letterId} {
+      allow read: if isAdmin()
+                    || resource.data.revealDate <= request.time;
+      allow create: if isAdmin()
+                    && request.resource.data.keys().hasOnly(
+                         ['author', 'text', 'revealDate', 'createdAt'])
+                    && isShortString(request.resource.data.author, 80)
+                    && isShortString(request.resource.data.text, 5000)
+                    && request.resource.data.revealDate is timestamp
+                    && hasServerTimestamp();
+      allow update: if false;     // sealed = sealed; edits = delete + recreate
+      allow delete: if isAdmin();
+    }
+
     // ── Admins: read your own doc, never write from the client ──
     // Bootstrap by creating these in the Firebase Console.
     match /admins/{uid} {

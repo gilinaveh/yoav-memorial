@@ -586,6 +586,98 @@ footer { position: relative; z-index: 1; text-align: center; padding: 3rem 2rem 
 /* Section sep */
 .section-sep { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, rgba(201,168,76,0.2), transparent); max-width: 1100px; margin: 0 auto; }
 
+/* ── Time Capsule / Letters to Yoav (P3-6) ────────────────── */
+.letters-section { background: linear-gradient(180deg, transparent, rgba(74,127,165,0.04)); }
+
+.letters-sealed {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  background: rgba(74,127,165,0.08);
+  border: 1px solid rgba(74,127,165,0.3);
+  border-radius: var(--radius);
+  padding: 0.85rem 1.4rem;
+  margin: 0 auto 2rem;
+  font-size: 0.9rem;
+  color: var(--sky-light);
+}
+.letters-sealed { display: none; }
+.letters-sealed.has-sealed { display: inline-flex; }
+.letters-sealed-wrap { text-align: center; }
+.letters-sealed .ls-icon { font-size: 1.2rem; }
+.letters-sealed .ls-count {
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.letters-sealed .ls-next {
+  color: var(--gold-light);
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.letter-card {
+  max-width: 720px;
+  margin: 0 auto 1.5rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: var(--radius);
+  padding: 1.75rem 2rem;
+  position: relative;
+}
+.letter-card::before {
+  content: '✉';
+  position: absolute;
+  top: -14px;
+  inset-inline-start: 1.5rem;
+  background: var(--deep-blue);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(201,168,76,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  font-size: 1rem;
+}
+.letter-meta {
+  font-size: 0.78rem;
+  color: var(--sky-light);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.8rem;
+}
+.letter-meta strong { color: var(--gold-light); font-weight: 600; }
+.letter-body {
+  white-space: pre-wrap;
+  line-height: 1.85;
+  color: var(--cream);
+  font-size: 1rem;
+  font-family: 'Frank Ruhl Libre', serif;
+}
+.letter-author {
+  margin-top: 1.1rem;
+  font-style: italic;
+  color: var(--gold-light);
+  font-size: 0.95rem;
+}
+.letter-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.letters-empty {
+  text-align: center;
+  color: var(--sky-light);
+  font-style: italic;
+  padding: 1.5rem;
+  opacity: 0.7;
+}
+
 /* ── Yoav's Places map (P3-1) ─────────────────────────────── */
 #placesMap {
   width: 100%;
@@ -843,6 +935,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
     <a href="#timeline" data-he>ציר זמן</a><a href="#timeline" data-en>Timeline</a>
     <a href="#places" data-he>מקומות</a><a href="#places" data-en>Places</a>
     <a href="#stories" data-he>סיפורים</a><a href="#stories" data-en>Stories</a>
+    <a href="#letters" data-he>מכתבים</a><a href="#letters" data-en>Letters</a>
     <a href="#candles" data-he>נרות זיכרון</a><a href="#candles" data-en>Candles</a>
     <a href="#comments" data-he>תגובות</a><a href="#comments" data-en>Comments</a>
     <button class="lang-toggle" onclick="toggleLang()" id="langBtn" aria-label="Switch language">EN</button>
@@ -1065,6 +1158,75 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
     </div>
   </div>
 </section>
+
+<!-- TIME CAPSULE — Letters to Yoav (P3-6) -->
+<div class="section-sep"></div>
+<section class="section letters-section" id="letters">
+  <h2 class="section-title"><span data-he>מכתבים ליואב</span><span data-en>Letters to Yoav</span></h2>
+  <p class="section-subtitle"><span data-he>מכתבים שנכתבו לעתיד, נחשפים ביום שלהם</span><span data-en>Letters written to the future, opened on their day</span></p>
+  <div class="divider"></div>
+
+  <!-- Sealed-letters meta line — hidden if there are zero sealed.
+       Shows count + the date of the next reveal so visitors know
+       there's more to come without leaking the content. -->
+  <div class="letters-sealed" id="lettersSealed" style="display:none;">
+    <span class="ls-icon">📨</span>
+    <span class="ls-count" id="lettersSealedCount">0</span>
+    <span class="ls-label" data-he>מכתבים חתומים ממתינים</span>
+    <span class="ls-label" data-en>sealed letters waiting</span>
+    <span class="ls-next" id="lettersNextReveal"></span>
+  </div>
+
+  <!-- Unlocked letters render here — newest reveal first. -->
+  <div id="lettersContainer">
+    <div class="letters-empty" id="lettersEmpty">
+      <span data-he>אין עדיין מכתבים חשופים</span>
+      <span data-en>No letters opened yet</span>
+    </div>
+  </div>
+
+  <div class="admin-only" style="display:none;text-align:center;margin-top:1.5rem;">
+    <button class="btn btn-gold" onclick="openLetterModal()">
+      ✍ <span data-he>כתבו מכתב חדש</span><span data-en>Write a New Letter</span>
+    </button>
+  </div>
+</section>
+
+<!-- ADD-LETTER MODAL (admin only) -->
+<div class="modal-overlay" id="letterModal">
+  <div class="modal">
+    <button class="modal-close" aria-label="Close letter dialog" onclick="closeModal('letterModal')">×</button>
+    <div class="modal-title">✍ <span data-he>מכתב ליואב</span><span data-en>A Letter to Yoav</span></div>
+    <div class="modal-subtitle">
+      <span data-he>המכתב יישאר חתום עד התאריך שתבחרו</span>
+      <span data-en>The letter stays sealed until the date you choose</span>
+    </div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label><span data-he>שם הכותב/ת</span><span data-en>Author</span></label>
+      <input id="letterAuthor" type="text" placeholder="לילך, צפריר, גילי…">
+    </div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label><span data-he>המכתב</span><span data-en>The letter</span></label>
+      <textarea id="letterText" rows="8" placeholder="יואב יקר…"></textarea>
+    </div>
+    <div class="form-group" style="margin-bottom:1.5rem;">
+      <label><span data-he>תאריך פתיחה</span><span data-en>Reveal date</span></label>
+      <input id="letterRevealDate" type="date">
+      <small style="font-size:0.78rem;color:var(--sky-light);margin-top:0.35rem;display:block;">
+        <span data-he>המכתב יופיע באתר במועד זה ולא לפני</span>
+        <span data-en>The letter will appear on the site on this date — not before</span>
+      </small>
+    </div>
+    <div style="display:flex;gap:0.6rem;">
+      <button class="btn btn-gold" style="flex:1;" onclick="saveLetter()">
+        🔒 <span data-he>החתמת המכתב</span><span data-en>Seal the Letter</span>
+      </button>
+      <button class="btn btn-outline" onclick="closeModal('letterModal')">
+        <span data-he>ביטול</span><span data-en>Cancel</span>
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- YAHRZEIT (P3-4) -->
 <div class="section-sep"></div>
@@ -1509,6 +1671,17 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
   // moderation queue. Candles aren't moderated because they're just a name.
   const placesQ        = query(collection(db, 'places'),   orderBy('createdAt', 'asc'));
   const candlesQ        = query(collection(db, 'candles'),  orderBy('createdAt', 'asc'));
+  // Time Capsule (P3-6). Public sees only revealed letters; the admin
+  // listener returns ALL letters so they can manage sealed ones.
+  // The lettersUnlockedQ uses Timestamp.fromDate(new Date()) at query
+  // time — we recompute it on every renderLetters() call so a letter
+  // that just unlocked at midnight appears without a reload.
+  const buildUnlockedLettersQ = () => query(
+    collection(db, 'letters'),
+    where('revealDate', '<=', new Date()),
+    orderBy('revealDate', 'desc')
+  );
+  const lettersAllQ = query(collection(db, 'letters'), orderBy('revealDate', 'asc'));
   const commentsApprovedQ = query(collection(db, 'comments'),
                               where('status', '==', 'approved'),
                               orderBy('createdAt', 'asc'));
@@ -1529,6 +1702,16 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
     onComments: cb => onSnapshot(commentsApprovedQ, s => cb(snap(s)), e => console.error('comments listener:', e)),
     onStories : cb => onSnapshot(storiesApprovedQ,  s => cb(snap(s)), e => console.error('stories listener:', e)),
     onPlaces  : cb => onSnapshot(placesQ,           s => cb(snap(s)), e => console.error('places listener:', e)),
+    // Public letters listener — only revealed-by-now letters. The
+    // query is rebuilt in renderLetters() so it stays current at
+    // midnight crossings; this entry just ships the initial snapshot.
+    onUnlockedLetters: cb => onSnapshot(buildUnlockedLettersQ(), s => cb(snap(s)),
+                                        e => console.warn('unlocked letters:', e.code)),
+    // Admin-only — sees ALL letters (sealed + unlocked) for the queue
+    // counter and management. Errors out cheaply for non-admins thanks
+    // to the rule.
+    onAllLetters: cb => onSnapshot(lettersAllQ, s => cb(snap(s)),
+                                    e => console.warn('all letters:', e.code)),
 
     // Admin-only — surface pending entries for the moderation queue.
     // Rules deny these reads for non-admins, so the listener errors out
@@ -1552,6 +1735,11 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
     addPlace   : data => addDoc(collection(db, 'places'),    { ...data, createdAt: serverTimestamp() }),
     updatePlace: (id, data) => updateDoc(doc(db, 'places', id), data),
     deletePlace: id => deleteDoc(doc(db, 'places', id)),
+
+    // Letters (Time Capsule) — admin-only writes; revealDate is a
+    // Date instance, Firestore converts to Timestamp automatically.
+    addLetter   : data => addDoc(collection(db, 'letters'),  { ...data, createdAt: serverTimestamp() }),
+    deleteLetter: id => deleteDoc(doc(db, 'letters', id)),
 
     deleteCandle : id => deleteDoc(doc(db, 'candles',  id)),
     deleteComment: id => deleteDoc(doc(db, 'comments', id)),
@@ -1882,6 +2070,9 @@ function applyAuth() {
     // and stories so the admin can approve/reject them. Listener
     // registration is idempotent — safe to call on every login.
     subscribeModeration();
+    // Time Capsule admin listener — gives access to sealed letters
+    // for the queue counter + management.
+    subscribeAdminLetters();
   }
 }
 
@@ -2740,6 +2931,178 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
 });
 
 // ══════════════════════════════════════════════════════════════
+// SECTION 20.3: TIME CAPSULE / LETTERS TO YOAV (P3-6)
+//
+// Letters are written by admins with a future revealDate. Until that
+// date, the letter is invisible to everyone (rules + query both
+// enforce). The day arrives — the letter quietly appears on the
+// public site. Email-on-reveal would need Cloud Functions; the
+// reveal happens passively when someone next loads the page.
+// ══════════════════════════════════════════════════════════════
+
+let lettersUnlockedData = [];   // public listener — only revealed letters
+let lettersAllData      = [];   // admin listener — all letters incl. sealed
+let _lettersAdminSubscribed = false;
+
+function _lettersToDate(value) {
+  // Firestore Timestamps come back with .toDate(); fallback handles
+  // synthetic test data or pre-Timestamp shape.
+  if (!value) return null;
+  if (typeof value.toDate === 'function') return value.toDate();
+  if (value instanceof Date) return value;
+  return new Date(value);
+}
+
+function renderLetters() {
+  const container = document.getElementById('lettersContainer');
+  const emptyEl   = document.getElementById('lettersEmpty');
+  const isAdmin   = currentUser?.role === 'admin';
+  if (!container) return;
+
+  // Wipe out any previously-rendered cards (keep the empty-state node
+  // around — we toggle it by display).
+  container.querySelectorAll('.letter-card').forEach(el => el.remove());
+
+  if (lettersUnlockedData.length === 0) {
+    if (emptyEl) emptyEl.style.display = 'block';
+  } else {
+    if (emptyEl) emptyEl.style.display = 'none';
+    // Most recently revealed first.
+    const sorted = [...lettersUnlockedData].sort((a, b) => {
+      const aD = _lettersToDate(a.revealDate)?.getTime() ?? 0;
+      const bD = _lettersToDate(b.revealDate)?.getTime() ?? 0;
+      return bD - aD;
+    });
+    sorted.forEach(letter => {
+      const card = document.createElement('article');
+      card.className = 'letter-card';
+      card.dataset.docId = letter.id;
+      const revealed = _lettersToDate(letter.revealDate);
+      const dateStr = revealed
+        ? new Intl.DateTimeFormat(lang === 'he' ? 'he-IL' : 'en', {
+            day: 'numeric', month: 'long', year: 'numeric'
+          }).format(revealed)
+        : '';
+      card.innerHTML = `
+        <div class="letter-meta">
+          <span data-he>נחשף</span><span data-en>Opened</span>
+          <strong>${escapeHtml(dateStr)}</strong>
+        </div>
+        <div class="letter-body">${escapeHtml(letter.text || '')}</div>
+        ${letter.author ? `<div class="letter-author">— ${escapeHtml(letter.author)}</div>` : ''}
+        ${isAdmin
+          ? `<div class="letter-actions">
+               <button class="btn btn-danger" onclick="deleteLetterConfirm('${escapeHtml(letter.id)}')">🗑 <span data-he>מחיקה</span><span data-en>Delete</span></button>
+             </div>`
+          : ''}
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  // Sealed counter — admin-only because non-admin reads are denied
+  // by the rules, so lettersAllData stays empty for visitors.
+  const sealedEl  = document.getElementById('lettersSealed');
+  if (!sealedEl) return;
+  if (!isAdmin) {
+    sealedEl.style.display = 'none';
+    return;
+  }
+  const now    = Date.now();
+  const sealed = lettersAllData.filter(l => {
+    const d = _lettersToDate(l.revealDate);
+    return d && d.getTime() > now;
+  });
+  if (sealed.length === 0) {
+    sealedEl.style.display = 'none';
+    return;
+  }
+  // Find the closest upcoming reveal.
+  sealed.sort((a, b) =>
+    _lettersToDate(a.revealDate).getTime() - _lettersToDate(b.revealDate).getTime()
+  );
+  const next = _lettersToDate(sealed[0].revealDate);
+  const nextStr = new Intl.DateTimeFormat(lang === 'he' ? 'he-IL' : 'en', {
+    day: 'numeric', month: 'long', year: 'numeric'
+  }).format(next);
+  document.getElementById('lettersSealedCount').textContent = sealed.length;
+  document.getElementById('lettersNextReveal').textContent =
+    (lang === 'he' ? '· הבא נפתח ב-' : '· next opens ') + nextStr;
+  sealedEl.style.display = 'inline-flex';
+}
+
+function subscribeAdminLetters() {
+  // Admin-only listener — sees all letters incl. sealed.
+  if (_lettersAdminSubscribed || !window.fbDB) return;
+  if (!currentUser || currentUser.role !== 'admin') return;
+  _lettersAdminSubscribed = true;
+  window.fbDB.onAllLetters(data => {
+    lettersAllData = data;
+    renderLetters();
+  });
+}
+
+// ── Admin write-letter flow ─────────────────────────────────
+
+function openLetterModal() {
+  if (!currentUser || currentUser.role !== 'admin') return;
+  const auth   = document.getElementById('letterAuthor');
+  const text   = document.getElementById('letterText');
+  const reveal = document.getElementById('letterRevealDate');
+  auth.value   = currentUser.name || '';
+  text.value   = '';
+  // Default reveal = 1 year from today, easy to adjust forward/back.
+  const oneYearOut = new Date();
+  oneYearOut.setFullYear(oneYearOut.getFullYear() + 1);
+  reveal.value = oneYearOut.toISOString().slice(0, 10);
+  reveal.min   = new Date().toISOString().slice(0, 10);  // can't seal in the past
+  document.getElementById('letterModal').classList.add('open');
+  setTimeout(() => text.focus(), 50);
+}
+
+async function saveLetter() {
+  const author     = document.getElementById('letterAuthor').value.trim();
+  const text       = document.getElementById('letterText').value.trim();
+  const revealStr  = document.getElementById('letterRevealDate').value;
+  if (!author || !text) {
+    showToast(lang === 'he' ? 'שם ותוכן חסרים' : 'Author and text are required');
+    return;
+  }
+  if (!revealStr) {
+    showToast(lang === 'he' ? 'תאריך פתיחה חסר' : 'Reveal date is required');
+    return;
+  }
+  // Parse the date as midnight in the visitor's local time. Storing
+  // a Date instance lets Firestore convert to a server Timestamp.
+  const revealDate = new Date(revealStr + 'T00:00:00');
+  if (revealDate.getTime() < Date.now() - 60_000) {
+    // 60s grace handles the user picking 'today' close to midnight.
+    showToast(lang === 'he' ? 'תאריך הפתיחה צריך להיות בעתיד' : 'Reveal date must be in the future');
+    return;
+  }
+  try {
+    await window.fbDB.addLetter({ author, text, revealDate });
+    closeModal('letterModal');
+    showToast(lang === 'he' ? '🔒 המכתב נחתם' : '🔒 Letter sealed');
+  } catch (e) {
+    console.error('saveLetter failed:', e);
+    showToast(lang === 'he' ? 'שגיאה בשמירת המכתב' : 'Error saving letter');
+  }
+}
+
+async function deleteLetterConfirm(id) {
+  if (!currentUser || currentUser.role !== 'admin') return;
+  if (!confirm(lang === 'he' ? 'למחוק את המכתב לצמיתות?' : 'Delete this letter permanently?')) return;
+  try {
+    await window.fbDB.deleteLetter(id);
+    showToast(lang === 'he' ? '🗑 נמחק' : '🗑 Deleted');
+  } catch (e) {
+    console.error('deleteLetter failed:', e);
+    showToast(lang === 'he' ? 'שגיאה במחיקה' : 'Error deleting');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
 // SECTION 20.4: YOAV'S MAP (P3-1)
 //
 // Leaflet-based interactive map. Pins live in Firestore /places.
@@ -3194,6 +3557,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     window.fbDB.onComments(data => { commentsData = data; renderComments(); });
     window.fbDB.onStories(data  => { storiesData  = data; renderStories();  });
     window.fbDB.onPlaces(data   => { placesData   = data; renderPlaces();   });
+    window.fbDB.onUnlockedLetters(data => { lettersUnlockedData = data; renderLetters(); });
   } else {
     console.error('Firebase bridge (window.fbDB) not initialized — check the module script.');
   }
