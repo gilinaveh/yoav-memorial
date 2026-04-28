@@ -64,9 +64,9 @@
   script-src  'self' 'unsafe-inline' https://www.gstatic.com https://accounts.google.com https://apis.google.com https://www.google.com https://www.gstatic.com/recaptcha/ https://unpkg.com;
   style-src   'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com;
   font-src    'self' https://fonts.gstatic.com;
-  img-src     'self' data: blob: https://drive.google.com https://lh3.googleusercontent.com https://*.googleusercontent.com https://www.google.com https://*.tile.openstreetmap.org https://unpkg.com;
+  img-src     'self' data: blob: https://drive.google.com https://lh3.googleusercontent.com https://*.googleusercontent.com https://www.google.com https://*.tile.openstreetmap.org https://unpkg.com https://i.ytimg.com https://i.scdn.co;
   connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://www.googleapis.com https://oauth2.googleapis.com https://securetoken.googleapis.com https://accounts.google.com https://content-firebaseappcheck.googleapis.com https://firebaseappcheck.googleapis.com;
-  frame-src   https://accounts.google.com https://yoav-memorial-7a8a3.firebaseapp.com https://www.google.com;
+  frame-src   https://accounts.google.com https://yoav-memorial-7a8a3.firebaseapp.com https://www.google.com https://www.youtube.com https://www.youtube-nocookie.com https://open.spotify.com;
   base-uri    'self';
   form-action 'self';
 ">
@@ -678,6 +678,131 @@ footer { position: relative; z-index: 1; text-align: center; padding: 3rem 2rem 
   opacity: 0.7;
 }
 
+/* ── Music for Yoav ──────────────────────────────────────── */
+.music-section { background: linear-gradient(180deg, transparent, rgba(201,168,76,0.04)); }
+
+.music-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0 auto 2rem;
+  flex-wrap: wrap;
+}
+.music-tab {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,168,76,0.25);
+  color: var(--cream);
+  padding: 0.6rem 1.4rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: 'Heebo', sans-serif;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+.music-tab:hover {
+  background: rgba(201,168,76,0.1);
+  border-color: rgba(201,168,76,0.4);
+}
+.music-tab.active {
+  background: var(--gold);
+  color: var(--deep-blue);
+  border-color: var(--gold);
+  font-weight: 600;
+}
+
+.music-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.song-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.song-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.song-title {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: 1.15rem;
+  color: var(--gold-light);
+  line-height: 1.3;
+}
+.song-artist {
+  font-size: 0.88rem;
+  color: var(--sky-light);
+  font-style: italic;
+}
+.song-note {
+  font-size: 0.85rem;
+  color: var(--cream);
+  opacity: 0.85;
+  line-height: 1.5;
+  border-inline-start: 2px solid rgba(201,168,76,0.4);
+  padding-inline-start: 0.7rem;
+}
+
+.song-embed {
+  position: relative;
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(13,27,42,0.8);
+  border: 1px solid rgba(201,168,76,0.15);
+}
+/* YouTube — 16:9 */
+.song-embed.platform-youtube { aspect-ratio: 16 / 9; }
+/* Spotify — track embed default 152px tall, full width. We let
+   Spotify control the height by giving the iframe a fixed 152px. */
+.song-embed.platform-spotify { height: 152px; }
+
+.song-embed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.song-embed-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  font-size: 2.2rem;
+  color: var(--gold);
+  background: linear-gradient(135deg, rgba(13,27,42,0.6), rgba(74,127,165,0.06));
+}
+
+.song-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.music-empty {
+  text-align: center;
+  color: var(--sky-light);
+  font-style: italic;
+  padding: 2rem 1rem;
+  opacity: 0.7;
+}
+
+/* Reduced motion: skip the Spotify auto-play hint pulse */
+@media (prefers-reduced-motion: reduce) {
+  .music-tab { transition: none; }
+}
+
 /* ── Yoav's Places map (P3-1) ─────────────────────────────── */
 #placesMap {
   width: 100%;
@@ -936,6 +1061,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
     <a href="#places" data-he>מקומות</a><a href="#places" data-en>Places</a>
     <a href="#stories" data-he>סיפורים</a><a href="#stories" data-en>Stories</a>
     <a href="#letters" data-he>מכתבים</a><a href="#letters" data-en>Letters</a>
+    <a href="#music" data-he>מוזיקה</a><a href="#music" data-en>Music</a>
     <a href="#candles" data-he>נרות זיכרון</a><a href="#candles" data-en>Candles</a>
     <a href="#comments" data-he>תגובות</a><a href="#comments" data-en>Comments</a>
     <button class="lang-toggle" onclick="toggleLang()" id="langBtn" aria-label="Switch language">EN</button>
@@ -1222,6 +1348,89 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
         🔒 <span data-he>החתמת המכתב</span><span data-en>Seal the Letter</span>
       </button>
       <button class="btn btn-outline" onclick="closeModal('letterModal')">
+        <span data-he>ביטול</span><span data-en>Cancel</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MUSIC FOR YOAV -->
+<div class="section-sep"></div>
+<section class="section music-section" id="music">
+  <h2 class="section-title"><span data-he>מוזיקה ליואב</span><span data-en>Music for Yoav</span></h2>
+  <p class="section-subtitle"><span data-he>שירים שאהב, ושירים שנכתבו עליו</span><span data-en>Songs he loved, and songs written about him</span></p>
+  <div class="divider"></div>
+
+  <div class="music-tabs" role="tablist" aria-label="Music categories">
+    <button class="music-tab active" id="musicTabLoved" role="tab" aria-selected="true" onclick="setMusicTab('loved')">
+      <span data-he>שירים שאהב</span><span data-en>Songs he loved</span>
+    </button>
+    <button class="music-tab" id="musicTabAbout" role="tab" aria-selected="false" onclick="setMusicTab('about')">
+      <span data-he>שירים עליו</span><span data-en>Songs about him</span>
+    </button>
+  </div>
+
+  <div class="music-grid" id="musicGrid"></div>
+
+  <div class="music-empty" id="musicEmpty">
+    <span data-he>עדיין לא נוספו שירים בקטגוריה זו</span>
+    <span data-en>No songs in this category yet</span>
+  </div>
+
+  <div class="admin-only" style="display:none;text-align:center;margin-top:2rem;">
+    <button class="btn btn-gold" onclick="openSongModal()">
+      ♫ <span data-he>הוסיפו שיר</span><span data-en>Add a Song</span>
+    </button>
+  </div>
+</section>
+
+<!-- ADD-SONG MODAL (admin only) -->
+<div class="modal-overlay" id="songModal">
+  <div class="modal">
+    <button class="modal-close" aria-label="Close song dialog" onclick="closeModal('songModal')">×</button>
+    <div class="modal-title">♫ <span data-he>הוסיפו שיר</span><span data-en>Add a Song</span></div>
+    <div class="modal-subtitle">
+      <span data-he>הדביקו קישור YouTube או Spotify, נמלא את השאר</span>
+      <span data-en>Paste a YouTube or Spotify link — we'll do the rest</span>
+    </div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label><span data-he>קישור</span><span data-en>Link</span></label>
+      <input id="songUrl" type="url" placeholder="https://www.youtube.com/watch?v=… or https://open.spotify.com/track/…">
+      <small style="font-size:0.78rem;color:var(--sky-light);margin-top:0.35rem;display:block;">
+        <span data-he>נתמכים: youtube.com/watch, youtu.be, open.spotify.com/track</span>
+        <span data-en>Supported: youtube.com/watch, youtu.be, open.spotify.com/track</span>
+      </small>
+    </div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label><span data-he>שם השיר</span><span data-en>Title</span></label>
+      <input id="songTitle" type="text" placeholder="">
+    </div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label><span data-he>אמן/להקה</span><span data-en>Artist</span></label>
+      <input id="songArtist" type="text" placeholder="">
+    </div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label><span data-he>הערה (אופציונלי)</span><span data-en>Note (optional)</span></label>
+      <textarea id="songNote" rows="2" placeholder=""></textarea>
+    </div>
+    <div class="form-group" style="margin-bottom:1.5rem;">
+      <label><span data-he>קטגוריה</span><span data-en>Category</span></label>
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:0.4rem;">
+        <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-weight:400;">
+          <input type="radio" name="songType" value="loved" checked>
+          <span data-he>שיר שאהב</span><span data-en>Song he loved</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-weight:400;">
+          <input type="radio" name="songType" value="about">
+          <span data-he>שיר עליו</span><span data-en>Song about him</span>
+        </label>
+      </div>
+    </div>
+    <div style="display:flex;gap:0.6rem;">
+      <button class="btn btn-gold" style="flex:1;" onclick="saveSong()">
+        ♫ <span data-he>הוסיפו</span><span data-en>Add</span>
+      </button>
+      <button class="btn btn-outline" onclick="closeModal('songModal')">
         <span data-he>ביטול</span><span data-en>Cancel</span>
       </button>
     </div>
@@ -1670,6 +1879,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
   // Admins use the additional onPending* listeners (below) to populate the
   // moderation queue. Candles aren't moderated because they're just a name.
   const placesQ        = query(collection(db, 'places'),   orderBy('createdAt', 'asc'));
+  const songsQ         = query(collection(db, 'songs'),    orderBy('createdAt', 'asc'));
   const candlesQ        = query(collection(db, 'candles'),  orderBy('createdAt', 'asc'));
   // Time Capsule (P3-6). Public sees only revealed letters; the admin
   // listener returns ALL letters so they can manage sealed ones.
@@ -1702,6 +1912,7 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
     onComments: cb => onSnapshot(commentsApprovedQ, s => cb(snap(s)), e => console.error('comments listener:', e)),
     onStories : cb => onSnapshot(storiesApprovedQ,  s => cb(snap(s)), e => console.error('stories listener:', e)),
     onPlaces  : cb => onSnapshot(placesQ,           s => cb(snap(s)), e => console.error('places listener:', e)),
+    onSongs   : cb => onSnapshot(songsQ,            s => cb(snap(s)), e => console.error('songs listener:', e)),
     // Public letters listener — only revealed-by-now letters. The
     // query is rebuilt in renderLetters() so it stays current at
     // midnight crossings; this entry just ships the initial snapshot.
@@ -1740,6 +1951,11 @@ body.lang-en input, body.lang-en textarea { direction: ltr; }
     // Date instance, Firestore converts to Timestamp automatically.
     addLetter   : data => addDoc(collection(db, 'letters'),  { ...data, createdAt: serverTimestamp() }),
     deleteLetter: id => deleteDoc(doc(db, 'letters', id)),
+
+    // Songs (Music for Yoav) — admin-only writes. embedId is the
+    // platform-specific ID; the iframe src is composed client-side.
+    addSong   : data => addDoc(collection(db, 'songs'),     { ...data, createdAt: serverTimestamp() }),
+    deleteSong: id => deleteDoc(doc(db, 'songs', id)),
 
     deleteCandle : id => deleteDoc(doc(db, 'candles',  id)),
     deleteComment: id => deleteDoc(doc(db, 'comments', id)),
@@ -3103,6 +3319,274 @@ async function deleteLetterConfirm(id) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// SECTION 20.5: MUSIC FOR YOAV
+//
+// Songs Yoav loved + songs about him. Admin curates via the modal;
+// renderSongs() lays out cards per the active tab and uses an
+// IntersectionObserver to lazy-mount the actual <iframe> only when
+// a card scrolls into view. Embeds are heavy (~500KB each) so we
+// avoid mounting them all at once.
+//
+// Storage shape:
+//   { title, artist, note?, type, platform, embedId, createdAt }
+//   type     ∈ { 'loved', 'about' }
+//   platform ∈ { 'youtube', 'spotify' }
+//   embedId  is the platform-specific ID — youtu.be/ABC's ABC, or
+//            Spotify track 6rqhFgbbKwnb9MLmUQDhG6's ID.
+//
+// CSP impact: frame-src extended to youtube.com, youtube-nocookie.com,
+// open.spotify.com. img-src extended to i.ytimg.com (YouTube
+// thumbnails) and i.scdn.co (Spotify cover art that the embed loads).
+// ══════════════════════════════════════════════════════════════
+
+let songsData = [];
+// Restore last-viewed tab if the visitor has been here before.
+// Defaults to 'loved' for first-time visitors and any unrecognised value.
+let activeMusicTab = (() => {
+  try {
+    const v = localStorage.getItem('yoav-music-tab');
+    return (v === 'loved' || v === 'about') ? v : 'loved';
+  } catch (_) { return 'loved'; }
+})();
+let _songEmbedObserver = null;  // singleton IntersectionObserver
+
+// ── URL → embedId parser ────────────────────────────────────
+// Returns { platform, embedId } or null. We accept the most common
+// share URL shapes; admin can also paste the bare ID, which we treat
+// as YouTube by default (most common case).
+function parseSongUrl(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  const url = raw.trim();
+  if (!url) return null;
+
+  // youtu.be/<id>?... — short share link
+  let m = url.match(/^https?:\/\/youtu\.be\/([\w-]{6,15})(?:[?&].*)?$/i);
+  if (m) return { platform: 'youtube', embedId: m[1] };
+
+  // youtube.com/watch?v=<id> (and ?v= can be anywhere in the query)
+  m = url.match(/^https?:\/\/(?:www\.|m\.|music\.)?youtube\.com\/watch\?(?:.+&)?v=([\w-]{6,15})/i);
+  if (m) return { platform: 'youtube', embedId: m[1] };
+
+  // youtube.com/embed/<id>
+  m = url.match(/^https?:\/\/(?:www\.)?youtube(?:-nocookie)?\.com\/embed\/([\w-]{6,15})/i);
+  if (m) return { platform: 'youtube', embedId: m[1] };
+
+  // open.spotify.com/track/<id>?si=…
+  m = url.match(/^https?:\/\/open\.spotify\.com\/(?:intl-\w+\/)?track\/([a-zA-Z0-9]{16,32})(?:[?&].*)?$/i);
+  if (m) return { platform: 'spotify', embedId: m[1] };
+
+  // Bare ID fallback — assume YouTube (most common). Spotify IDs are
+  // 22 chars base62; if it looks like that we route to Spotify.
+  if (/^[a-zA-Z0-9]{22}$/.test(url)) return { platform: 'spotify', embedId: url };
+  if (/^[\w-]{6,15}$/.test(url))     return { platform: 'youtube', embedId: url };
+
+  return null;
+}
+
+// Build the iframe src for the given platform/id. Both URLs are
+// fully constructed client-side from a small whitelist of templates,
+// which means a hostile embedId can only break its own iframe — it
+// can't escape the URL grammar.
+function songEmbedSrc(platform, embedId) {
+  if (platform === 'youtube') {
+    // youtube-nocookie reduces cross-site tracking. We URL-encode the
+    // ID even though the rule restricts it to word chars + dash —
+    // belt-and-suspenders against future schema drift.
+    return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(embedId)}?rel=0&modestbranding=1`;
+  }
+  if (platform === 'spotify') {
+    return `https://open.spotify.com/embed/track/${encodeURIComponent(embedId)}?utm_source=memorial`;
+  }
+  return '';
+}
+
+function setMusicTab(tab) {
+  if (tab !== 'loved' && tab !== 'about') return;
+  activeMusicTab = tab;
+  try { localStorage.setItem('yoav-music-tab', tab); } catch (_) { /* private mode */ }
+  document.getElementById('musicTabLoved')?.classList.toggle('active', tab === 'loved');
+  document.getElementById('musicTabAbout')?.classList.toggle('active', tab === 'about');
+  document.getElementById('musicTabLoved')?.setAttribute('aria-selected', tab === 'loved');
+  document.getElementById('musicTabAbout')?.setAttribute('aria-selected', tab === 'about');
+  renderSongs();
+}
+
+function renderSongs() {
+  const grid    = document.getElementById('musicGrid');
+  const emptyEl = document.getElementById('musicEmpty');
+  if (!grid) return;
+
+  const isAdmin = currentUser?.role === 'admin';
+  const filtered = songsData
+    .filter(s => s.type === activeMusicTab && s.platform && s.embedId)
+    .sort((a, b) => {
+      // Newest first by createdAt; fall back gracefully for synthetic test data.
+      const aT = a.createdAt?.toMillis?.() ?? a.createdAt?.getTime?.() ?? 0;
+      const bT = b.createdAt?.toMillis?.() ?? b.createdAt?.getTime?.() ?? 0;
+      return bT - aT;
+    });
+
+  grid.innerHTML = '';
+
+  if (filtered.length === 0) {
+    if (emptyEl) emptyEl.style.display = 'block';
+    grid.style.display = 'none';
+    return;
+  }
+  if (emptyEl) emptyEl.style.display = 'none';
+  grid.style.display = 'grid';
+
+  filtered.forEach(song => {
+    const card = document.createElement('article');
+    card.className = 'song-card';
+    card.dataset.docId = song.id;
+    const platformIcon = song.platform === 'spotify' ? '🎧' : '▶';
+    card.innerHTML = `
+      <div class="song-meta">
+        <div class="song-title">${escapeHtml(song.title || '')}</div>
+        <div class="song-artist">${escapeHtml(song.artist || '')}</div>
+      </div>
+      ${song.note ? `<div class="song-note">${escapeHtml(song.note)}</div>` : ''}
+      <div class="song-embed platform-${escapeHtml(song.platform)}"
+           data-platform="${escapeHtml(song.platform)}"
+           data-embed-id="${escapeHtml(song.embedId)}"
+           data-mounted="0">
+        <div class="song-embed-placeholder">${platformIcon}</div>
+      </div>
+      ${isAdmin
+        ? `<div class="song-actions">
+             <button class="btn btn-danger" onclick="deleteSongConfirm('${escapeHtml(song.id)}')">🗑 <span data-he>מחיקה</span><span data-en>Delete</span></button>
+           </div>`
+        : ''}
+    `;
+    grid.appendChild(card);
+    // Newly-rendered embed wrappers join the IntersectionObserver
+    // queue. The observer will lazy-mount the iframe when the card
+    // scrolls within ~200px of the viewport.
+    const wrap = card.querySelector('.song-embed');
+    if (wrap) _observeSongEmbed(wrap);
+  });
+
+  // Re-apply data-he/data-en visibility so newly-injected nodes match
+  // the current language.
+  if (typeof applyLanguage === 'function') applyLanguage(lang);
+}
+
+function _ensureSongEmbedObserver() {
+  if (_songEmbedObserver) return _songEmbedObserver;
+  if (typeof IntersectionObserver === 'undefined') {
+    // Old browser fallback: no observer → mount eagerly.
+    _songEmbedObserver = {
+      observe: el => _mountSongEmbed(el),
+      unobserve: () => {}
+    };
+    return _songEmbedObserver;
+  }
+  _songEmbedObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        _mountSongEmbed(entry.target);
+        _songEmbedObserver.unobserve(entry.target);
+      }
+    });
+  }, { rootMargin: '200px' });
+  return _songEmbedObserver;
+}
+
+function _observeSongEmbed(wrap) {
+  if (!wrap || wrap.dataset.mounted === '1') return;
+  _ensureSongEmbedObserver().observe(wrap);
+}
+
+function _mountSongEmbed(wrap) {
+  if (!wrap || wrap.dataset.mounted === '1') return;
+  const platform = wrap.dataset.platform;
+  const embedId  = wrap.dataset.embedId;
+  const src      = songEmbedSrc(platform, embedId);
+  if (!src) return;
+  wrap.dataset.mounted = '1';
+  // Replace the placeholder with the real iframe.
+  wrap.innerHTML = '';
+  const iframe = document.createElement('iframe');
+  iframe.src = src;
+  iframe.loading = 'lazy';
+  iframe.title = (platform === 'spotify' ? 'Spotify' : 'YouTube') + ' player';
+  iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+  iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+  // sandbox is intentionally omitted: YouTube + Spotify embeds need
+  // top-level navigation (link out to source) and same-origin tokens
+  // for resume/like state. The frame-src CSP whitelist is the
+  // perimeter.
+  wrap.appendChild(iframe);
+}
+
+// ── Admin add-song flow ─────────────────────────────────────
+
+function openSongModal() {
+  if (!currentUser || currentUser.role !== 'admin') return;
+  ['songUrl', 'songTitle', 'songArtist', 'songNote'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  // Default to the currently-active tab so quickly adding several
+  // songs in a row doesn't bounce categories on the admin.
+  const radios = document.querySelectorAll('input[name="songType"]');
+  radios.forEach(r => { r.checked = (r.value === activeMusicTab); });
+  document.getElementById('songModal').classList.add('open');
+  setTimeout(() => document.getElementById('songUrl')?.focus(), 50);
+}
+
+async function saveSong() {
+  const url    = document.getElementById('songUrl').value.trim();
+  const title  = document.getElementById('songTitle').value.trim();
+  const artist = document.getElementById('songArtist').value.trim();
+  const note   = document.getElementById('songNote').value.trim();
+  const typeEl = document.querySelector('input[name="songType"]:checked');
+  const type   = typeEl?.value || 'loved';
+
+  if (!title || !artist) {
+    showToast(lang === 'he' ? 'שם השיר ושם האמן חסרים' : 'Title and artist are required');
+    return;
+  }
+  const parsed = parseSongUrl(url);
+  if (!parsed) {
+    showToast(lang === 'he' ? 'קישור לא נתמך — YouTube או Spotify בלבד' : 'Unsupported link — YouTube or Spotify only');
+    return;
+  }
+  try {
+    const payload = {
+      title,
+      artist,
+      type,
+      platform: parsed.platform,
+      embedId : parsed.embedId,
+    };
+    if (note) payload.note = note;
+    await window.fbDB.addSong(payload);
+    closeModal('songModal');
+    showToast(lang === 'he' ? '♫ השיר נוסף' : '♫ Song added');
+    // If the admin added a song to the inactive tab, switch tabs so
+    // they can see it land.
+    if (type !== activeMusicTab) setMusicTab(type);
+  } catch (e) {
+    console.error('saveSong failed:', e);
+    showToast(lang === 'he' ? 'שגיאה בשמירה' : 'Error saving song');
+  }
+}
+
+async function deleteSongConfirm(id) {
+  if (!currentUser || currentUser.role !== 'admin') return;
+  if (!confirm(lang === 'he' ? 'למחוק את השיר?' : 'Delete this song?')) return;
+  try {
+    await window.fbDB.deleteSong(id);
+    showToast(lang === 'he' ? '🗑 נמחק' : '🗑 Deleted');
+  } catch (e) {
+    console.error('deleteSong failed:', e);
+    showToast(lang === 'he' ? 'שגיאה במחיקה' : 'Error deleting');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
 // SECTION 20.4: YOAV'S MAP (P3-1)
 //
 // Leaflet-based interactive map. Pins live in Firestore /places.
@@ -3558,9 +4042,15 @@ window.addEventListener('DOMContentLoaded', async () => {
     window.fbDB.onStories(data  => { storiesData  = data; renderStories();  });
     window.fbDB.onPlaces(data   => { placesData   = data; renderPlaces();   });
     window.fbDB.onUnlockedLetters(data => { lettersUnlockedData = data; renderLetters(); });
+    window.fbDB.onSongs(data    => { songsData    = data; renderSongs();    });
   } else {
     console.error('Firebase bridge (window.fbDB) not initialized — check the module script.');
   }
+
+  // Music for Yoav: reflect persisted tab on the buttons before any
+  // songs arrive. setMusicTab() is idempotent — calling it with the
+  // current tab just re-applies aria-selected + the .active class.
+  setMusicTab(activeMusicTab);
 
   // Yahrzeit countdown + footer Hebrew date (P3-4). No network calls,
   // no Firebase dependency — purely Intl-based, runs on every load.

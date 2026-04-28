@@ -170,6 +170,37 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ── Songs: Music for Yoav ──
+    //   { title, artist, note?, type, platform, embedId, createdAt }
+    // Public read so visitors can listen. Admin-only writes — songs are
+    // curated by family (no visitor submissions in this iteration).
+    //
+    // type     ∈ { 'loved', 'about' }
+    // platform ∈ { 'youtube', 'spotify' }
+    // embedId  is the platform-specific ID we render in the iframe URL.
+    //          We store it raw and build the iframe src on the client,
+    //          so a hostile embedId cannot escape the URL grammar — the
+    //          worst case is a broken iframe.
+    function isSongType(v)     { return v == 'loved'   || v == 'about'; }
+    function isSongPlatform(v) { return v == 'youtube' || v == 'spotify'; }
+    match /songs/{songId} {
+      allow read: if true;
+      allow create: if isAdmin()
+                    && request.resource.data.keys().hasOnly(
+                         ['title', 'artist', 'note', 'type', 'platform', 'embedId', 'createdAt'])
+                    && isShortString(request.resource.data.title, 200)
+                    && isShortString(request.resource.data.artist, 200)
+                    && isOptionalShortString(request.resource.data.note, 500)
+                    && isSongType(request.resource.data.type)
+                    && isSongPlatform(request.resource.data.platform)
+                    && isShortString(request.resource.data.embedId, 80)
+                    && hasServerTimestamp();
+      allow update: if isAdmin()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['title', 'artist', 'note', 'type', 'platform', 'embedId']);
+      allow delete: if isAdmin();
+    }
+
     // ── Admins: read your own doc, never write from the client ──
     // Bootstrap by creating these in the Firebase Console.
     match /admins/{uid} {

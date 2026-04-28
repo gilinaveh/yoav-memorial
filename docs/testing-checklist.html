@@ -333,8 +333,9 @@
     </div>
 
     <div class="auto-banner">
-        🤖 <strong>13 of these checks now run automatically</strong> via Playwright. Run
-        <code>npm test</code> from the repo root to execute them in ~10 seconds. CI also
+        🤖 <strong>50 of these checks now run automatically</strong> via Playwright across
+        8 spec files (smoke, xss, auth-ui, moderation, yahrzeit, places, letters, music). Run
+        <code>npm test</code> from the repo root to execute them in ~20 seconds. CI also
         runs them on every push and PR — see the
         <a href="https://github.com/gilinaveh/yoav-memorial/actions/workflows/test.yml" target="_blank">Tests workflow</a>.
         Items below tagged <span class="auto-tag">Auto ✓</span> are covered by the suite;
@@ -344,34 +345,43 @@
     </div>
 
     <div class="auto-banner" style="border-color: rgba(201,168,76,0.4); background: linear-gradient(135deg, rgba(201,168,76,0.10), rgba(74,127,165,0.06));">
-        📌 <strong style="color: var(--gold-light);">Project status — last updated April 26, 2026</strong><br>
+        📌 <strong style="color: var(--gold-light);">Project status — last updated April 27, 2026</strong><br>
         <span style="color: var(--sky-light); font-size: 0.9rem; line-height: 1.7; display: block; margin-top: 8px;">
-            <strong style="color: #7DCEA0;">✓ Shipped:</strong> P0-1 hardcoded passwords removed (Firebase Auth + /admins/{uid}),
+            <strong style="color: #7DCEA0;">✓ Shipped — Phase 1 (Security &amp; Hardening):</strong>
+            P0-1 hardcoded passwords removed (Firebase Auth + /admins/{uid}),
             P0-2 Firestore rules deployed,
             P0-3 XSS escape on all renderers,
             P0-4 App Check wired (off by default),
             P0-5 Content Security Policy via meta,
             P0-6 config extracted to <code>config/site-config.js</code>,
-            P0-8 Drive sharing audit (decision documented),
+            P0-7 comment &amp; story moderation queue (status: pending → approved/rejected, admin-gated reads),
+            P0-8 Drive sharing audit,
             P1-2 branch protection on <code>main</code> + required Tests check,
-            P1-4 Playwright + GitHub Actions CI (13 specs, all green),
-            P1-6 lazy-load gallery (shimmer + fade-in),
-            P1-7 a11y &amp; SEO pass (OG/Twitter, ARIA, alt, focus, reduced-motion),
+            P1-4 Playwright + GitHub Actions CI (38 specs, all green),
+            P1-6 lazy-load gallery,
+            P1-7 a11y &amp; SEO pass,
             P1-8 daily automated backup (cron 22:00 UTC, 90-day artifact retention),
             favicon, README badges.
         </span>
         <span style="color: var(--sky-light); font-size: 0.9rem; line-height: 1.7; display: block; margin-top: 8px;">
-            <strong style="color: #F5C16C;">⏳ Next up:</strong>
-            P0-7 comment moderation queue (biggest remaining Phase 1 item),
+            <strong style="color: #7DCEA0;">✓ Shipped — Phase 3 (New features):</strong>
+            P3-1 Yoav's Map (Leaflet pins, admin-only write),
+            P3-4 Hebrew calendar yahrzeit (countdown, .ics, Google Calendar button, footer Hebrew date),
+            P3-6 Time Capsule (sealed letters with reveal-date, admin sealed-counter),
+            P3-7 Music for Yoav (loved/about tabs, YouTube + Spotify embeds, lazy-mounted iframes, admin curation).
+        </span>
+        <span style="color: var(--sky-light); font-size: 0.9rem; line-height: 1.7; display: block; margin-top: 8px;">
+            <strong style="color: #F5C16C;">⏳ Still on the roadmap:</strong>
             P1-1 Vite + modular refactor,
             P1-3 Netlify/Vercel hosting migration,
             P1-5 image CDN (Cloudinary / imgix),
-            or jump to a Phase 3 feature like <em>Hebrew calendar yahrzeit reminders</em>
-            (the most emotionally meaningful remaining item).
+            Phase 5 three-tier dev environment (dev / staging / prod Firebase projects),
+            other Phase 3 ideas (memory-tree, video tributes, etc).
         </span>
         <span style="color: var(--text-light, #A8C5DA); font-size: 0.82rem; display: block; margin-top: 10px; opacity: 0.8;">
             Full audit + plan: <a href="memorial-roadmap.html" style="color: var(--gold);">memorial-roadmap.html</a> ·
-            Deploy/admin/backup procedures: <a href="https://github.com/gilinaveh/yoav-memorial/blob/main/SECURITY-MIGRATION.md" target="_blank" style="color: var(--gold);">SECURITY-MIGRATION.md</a>
+            Deploy/admin/backup procedures: <a href="https://github.com/gilinaveh/yoav-memorial/blob/main/SECURITY-MIGRATION.md" target="_blank" style="color: var(--gold);">SECURITY-MIGRATION.md</a> ·
+            Session continuity: <a href="https://github.com/gilinaveh/yoav-memorial/blob/main/HANDOFF.md" target="_blank" style="color: var(--gold);">HANDOFF.md</a>
         </span>
     </div>
 
@@ -772,6 +782,335 @@
     </div>
 
     <div class="phase">
+        <div class="phase-title">🛡️ Phase 11: Comment &amp; Story Moderation (P0-7, added April 26)</div>
+        <div class="phase-desc">
+            New visitor comments / stories arrive as <code>status: 'pending'</code> and stay
+            invisible until an admin approves them from the moderation queue.
+        </div>
+        <ul class="task-list">
+            <li class="task-item">
+                <input type="checkbox" id="t45">
+                <div class="task-content">
+                    <strong>Anonymous post lands as pending and is not publicly visible <em class="priority-critical">Critical</em><span class="auto-tag">Auto ✓</span></strong>
+                    <div class="steps">In an Incognito window (anonymous Firebase auth), post a test comment. Then reload — without logging in.</div>
+                    <div class="expected">The comment does NOT appear in the public list. In Firestore console, the doc exists with <code>status: 'pending'</code>.<br><em>(Automated: <code>tests/moderation.spec.js</code> verifies the public read filter and the form's pending-status submission path.)</em></div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t46">
+                <div class="task-content">
+                    <strong>Admin moderation queue shows pending entries</strong>
+                    <div class="steps">Log in as admin → scroll to the moderation panel (or open via the admin bar). Look for the just-posted test comment.</div>
+                    <div class="expected">Entry appears with author, body, dateStr, and Approve / Reject buttons. Pending count badge matches the number of pending docs.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t47">
+                <div class="task-content">
+                    <strong>Approving makes the entry public immediately</strong>
+                    <div class="steps">Click Approve on the test comment. Open an incognito tab to the site and scroll to comments.</div>
+                    <div class="expected">Entry now appears for anonymous visitors. Firestore status flipped to <code>approved</code>. The pending counter decreased.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t48">
+                <div class="task-content">
+                    <strong>Rejecting hides the entry but keeps it for audit</strong>
+                    <div class="steps">Post another test comment, then in the queue click Reject.</div>
+                    <div class="expected">Entry disappears from the moderation queue and is not visible publicly. Firestore status is <code>rejected</code>; the doc is not deleted.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t49">
+                <div class="task-content">
+                    <strong>Pre-existing docs (no <code>status</code> field) are still visible <span class="auto-tag">Auto ✓</span></strong>
+                    <div class="steps">Inspect a comment that was created before the moderation migration (no <code>status</code> field, or <code>status: 'approved'</code> from <code>scripts/migrate-add-status.js</code>).</div>
+                    <div class="expected">Visible to the public. Firestore rule <code>!('status' in resource.data) || resource.data.status == 'approved'</code> covers both states.<br><em>(Automated: rule logic exercised via <code>moderation.spec.js</code>.)</em></div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase">
+        <div class="phase-title">🕯️ Phase 12: Hebrew Yahrzeit (P3-4, added April 26)</div>
+        <div class="phase-desc">
+            Hebrew-calendar countdown to the next yahrzeit (11 Tishri), .ics download, and
+            Google-Calendar prefilled link. All assertions are deterministic relative to
+            today's Hebrew date — they don't drift over time.
+        </div>
+        <ul class="task-list">
+            <li class="task-item">
+                <input type="checkbox" id="t50">
+                <div class="task-content">
+                    <strong>Yahrzeit section is visible with Hebrew + English dates <span class="auto-tag">Auto ✓</span></strong>
+                    <div class="steps">Open the site, scroll to the יום הזיכרון section.</div>
+                    <div class="expected">Today's Hebrew date appears (e.g. "ד' באייר תשפ"ו") alongside an English transliteration. Title contains "יום הזיכרון".<br><em>(Automated: <code>tests/yahrzeit.spec.js</code> covers Hebrew + English rendering, range and content checks.)</em></div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t51">
+                <div class="task-content">
+                    <strong>Countdown shows non-negative days OR the day-of banner <span class="auto-tag">Auto ✓</span></strong>
+                    <div class="steps">Look at the countdown card. If today happens to BE the yahrzeit, expect a memorial banner instead.</div>
+                    <div class="expected">Either: a number of days between 0 and 385 (Hebrew leap-year max), OR the <code>.yahrzeit-day-banner</code> if <code>isYahrzeitToday()</code> returns true.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t52">
+                <div class="task-content">
+                    <strong>Add-to-Google-Calendar opens a prefilled "save event" view <span class="auto-tag">Auto ✓ (URL shape)</span></strong>
+                    <div class="steps">Click the gold "הוסף ליומן Google" button.</div>
+                    <div class="expected">New tab opens calendar.google.com/calendar/render with action=TEMPLATE, the Hebrew title in <code>text=</code>, the date in <code>dates=</code>, and a description. Hitting "Save" creates the event in your calendar.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t53">
+                <div class="task-content">
+                    <strong>.ics download produces a valid RFC-5545 calendar <span class="auto-tag">Auto ✓</span></strong>
+                    <div class="steps">Click the outline ".ics" button. Open the downloaded file in any text editor.</div>
+                    <div class="expected">Contains <code>BEGIN:VCALENDAR</code>, <code>BEGIN:VEVENT</code>, <code>SUMMARY:</code>, <code>TRIGGER:-P7D</code> (7-day reminder), CRLF line endings. Apple Calendar and Outlook should import it cleanly.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t54">
+                <div class="task-content">
+                    <strong>Footer shows today's Hebrew date <span class="auto-tag">Auto ✓</span></strong>
+                    <div class="steps">Scroll to the footer.</div>
+                    <div class="expected">A line containing Hebrew letters showing today's Hebrew date. Updates automatically across midnight (Israeli timezone).</div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase">
+        <div class="phase-title">📍 Phase 13: Yoav's Map (P3-1, added April 26)</div>
+        <div class="phase-desc">
+            Leaflet map with admin-pinnable places. Public can view all pins; only admins
+            can add/edit/delete. Click-to-place flow is admin-only. Includes XSS regression
+            test on popup HTML.
+        </div>
+        <ul class="task-list">
+            <li class="task-item">
+                <input type="checkbox" id="t55">
+                <div class="task-content">
+                    <strong>Map mounts with OSM tiles and zoom controls <span class="auto-tag">Auto ✓</span></strong>
+                    <div class="steps">Open the site, scroll to the מקומות section.</div>
+                    <div class="expected">Leaflet map renders inside <code>#placesMap</code>. OpenStreetMap tiles load (no grey squares). Zoom +/- and attribution visible.<br><em>(Automated: <code>tests/places.spec.js</code> asserts <code>.leaflet-container</code> and <code>.leaflet-tile-pane</code>.)</em></div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t56">
+                <div class="task-content">
+                    <strong>Anonymous visitors don't see admin controls <span class="auto-tag">Auto ✓</span></strong>
+                    <div class="steps">Without logging in, look for an "Add place" button or a click-hint above the map.</div>
+                    <div class="expected">Neither <code>#addPlaceBtn</code> nor <code>#placesHint</code> are visible. The .admin-only wrapper keeps them hidden via CSS.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t57">
+                <div class="task-content">
+                    <strong>Admin can drop a pin via click-to-place</strong>
+                    <div class="steps">Logged in as admin, click "Add place", then click anywhere on the map. Fill in the modal (name, story, optional photo URL) and save.</div>
+                    <div class="expected">A new pin appears at the click location. Refresh — pin persists. Firestore <code>/places</code> has a new doc with <code>name</code>, <code>story</code>, <code>lat</code>, <code>lng</code>, <code>createdAt</code>.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t58">
+                <div class="task-content">
+                    <strong>Pin popup escapes hostile data <em class="priority-critical">Critical</em><span class="auto-tag">Auto ✓</span></strong>
+                    <div class="steps">Synthetic pin with name <code>&lt;img src=x onerror=...&gt;</code> and story <code>&lt;script&gt;...&lt;/script&gt;</code> opened via the test harness.</div>
+                    <div class="expected">Popup HTML contains the literal <code>&amp;lt;img</code> / <code>&amp;lt;script</code> entities. <code>window.__pwned</code> stays undefined.<br><em>(Automated: <code>tests/places.spec.js</code> renders synthetic data and asserts no JS execution.)</em></div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t59">
+                <div class="task-content">
+                    <strong>Lat/Lng bounds are enforced by Firestore rules</strong>
+                    <div class="steps">In DevTools console as admin: <code>fbDB.addPlace({ name: 'X', lat: 999, lng: 0 })</code>.</div>
+                    <div class="expected">Promise rejects with <code>permission-denied</code>. Rule requires <code>lat ∈ [-90, 90]</code> and <code>lng ∈ [-180, 180]</code>.</div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase">
+        <div class="phase-title">📨 Phase 14: Time Capsule — Letters (P3-6, added April 26)</div>
+        <div class="phase-desc">
+            Letters sealed with a future <code>revealDate</code>. Public listener queries
+            <code>where revealDate &lt;= now</code>; Firestore rule enforces the same on the
+            server so even a hostile client can't read sealed letters. Admins can see
+            everything (including sealed) for queue management.
+        </div>
+        <ul class="task-list">
+            <li class="task-item">
+                <input type="checkbox" id="t60">
+                <div class="task-content">
+                    <strong>Letters section + nav link present <span class="auto-tag">Auto ✓</span></strong>
+                    <div class="steps">Open the site; the מכתבים section sits between Stories and Yahrzeit.</div>
+                    <div class="expected">Section is in the DOM with title containing "מכתבים". Nav has a link with <code>href="#letters"</code>.<br><em>(Automated: <code>tests/letters.spec.js</code>.)</em></div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t61">
+                <div class="task-content">
+                    <strong>Anonymous visitors don't see the write button or sealed counter <span class="auto-tag">Auto ✓</span></strong>
+                    <div class="steps">Without logging in, scroll to letters.</div>
+                    <div class="expected">The "כתוב מכתב" gold button is hidden (lives inside <code>.admin-only</code>). The "📨 N sealed letters" counter is also hidden when no user.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t62">
+                <div class="task-content">
+                    <strong>Admin can write a sealed letter <em class="priority-critical">Critical</em></strong>
+                    <div class="steps">Logged in as admin, click "כתוב מכתב". Fill author + text, set reveal date 1 day in the future, save.</div>
+                    <div class="expected">Toast confirms the letter was sealed. Firestore <code>/letters</code> has a new doc with <code>author</code>, <code>text</code>, <code>revealDate</code> (timestamp), <code>createdAt</code>. Sealed counter increments by 1.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t63">
+                <div class="task-content">
+                    <strong>Sealed letter is invisible to anonymous visitors <em class="priority-critical">Critical</em></strong>
+                    <div class="steps">In an Incognito window, scroll to letters.</div>
+                    <div class="expected">Letter does NOT appear. The empty state ("אין עדיין מכתבים שנפתחו") is shown. Confirms server-side rule <code>resource.data.revealDate &lt;= request.time</code> blocks the read.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t64">
+                <div class="task-content">
+                    <strong>Reveal date in the past makes the letter public</strong>
+                    <div class="steps">In Firestore console, edit a sealed letter — change <code>revealDate</code> to a past timestamp. Reload the public site.</div>
+                    <div class="expected">Letter now renders for anonymous visitors. Order is newest reveal first. Empty state hidden.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t65">
+                <div class="task-content">
+                    <strong>Letter rendering escapes hostile content <em class="priority-critical">Critical</em><span class="auto-tag">Auto ✓</span></strong>
+                    <div class="steps">Test harness injects an unlocked letter with author <code>&lt;script&gt;...&lt;/script&gt;</code> and body <code>&lt;img onerror=...&gt;</code>.</div>
+                    <div class="expected">Cards display the literal text. <code>window.__pwned</code> stays undefined. Body HTML contains <code>&amp;lt;img</code>.<br><em>(Automated: <code>letters.spec.js</code>.)</em></div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t66">
+                <div class="task-content">
+                    <strong>Sealed counter is admin-only <span class="auto-tag">Auto ✓</span></strong>
+                    <div class="steps">Anonymous: counter hidden even if sealed letters exist. Admin: counter shows N + the next reveal date.</div>
+                    <div class="expected"><code>#lettersSealed</code> visibility flips with <code>currentUser</code>. Count text matches <code>lettersAllData.length</code> minus already-unlocked entries.</div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase">
+        <div class="phase-title">🎵 Phase 15: Music for Yoav (P3-7, added April 27)</div>
+        <div class="phase-desc">
+            Songs Yoav loved + songs about him. Two tabs persist via localStorage,
+            iframes lazy-mount via IntersectionObserver, admin-only writes via the
+            Add-Song modal. CSP <code>frame-src</code> extended to YouTube +
+            Spotify; <code>img-src</code> extended to <code>i.ytimg.com</code> and
+            <code>i.scdn.co</code>.
+        </div>
+        <ul class="task-list">
+            <li class="task-item">
+                <input type="checkbox" id="t69">
+                <div class="task-content">
+                    <strong>Music section + nav link present <span class="auto-tag">Auto ✓</span></strong>
+                    <div class="steps">Open the site; the מוזיקה section sits between Letters and Yahrzeit.</div>
+                    <div class="expected">Section is in the DOM with title "מוזיקה ליואב". Nav has a link with <code>href="#music"</code>.<br><em>(Automated: <code>tests/music.spec.js</code>.)</em></div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t70">
+                <div class="task-content">
+                    <strong>Tabs switch and persist across reloads <span class="auto-tag">Auto ✓</span></strong>
+                    <div class="steps">Click "שירים עליו" (about). Reload the page.</div>
+                    <div class="expected">After reload, the same tab is still active. <code>localStorage</code> key <code>yoav-music-tab</code> is <code>'about'</code>.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t71">
+                <div class="task-content">
+                    <strong>Admin-only "Add Song" button is hidden from anonymous visitors <span class="auto-tag">Auto ✓</span></strong>
+                    <div class="steps">Without logging in, scroll to music. The gold "הוסיפו שיר" button should not be visible.</div>
+                    <div class="expected">Button is inside <code>.admin-only</code> wrapper which defaults to <code>display:none</code>.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t72">
+                <div class="task-content">
+                    <strong>Admin can paste a YouTube share link and add a song <em class="priority-critical">Critical</em></strong>
+                    <div class="steps">Logged in as admin: click "הוסיפו שיר", paste a real YouTube URL (e.g. <code>https://www.youtube.com/watch?v=…</code>), fill title + artist, choose category, save.</div>
+                    <div class="expected">Toast confirms ♫ Song added. Card appears in the active tab. Firestore <code>/songs</code> has a new doc with <code>platform: 'youtube'</code> and just the video <code>embedId</code> (not the full URL).</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t73">
+                <div class="task-content">
+                    <strong>YouTube embed plays end-to-end</strong>
+                    <div class="steps">Scroll to bring the new card into view, click play.</div>
+                    <div class="expected">YouTube player loads from <code>www.youtube-nocookie.com</code>, audio + video play normally, no CSP errors in console. The iframe wasn't mounted before the card scrolled into view (check Network tab — only one iframe document request fires).</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t74">
+                <div class="task-content">
+                    <strong>Admin can paste a Spotify track link and add a song</strong>
+                    <div class="steps">Same flow with a Spotify URL like <code>https://open.spotify.com/track/6rqhFgbbKwnb9MLmUQDhG6?si=…</code>.</div>
+                    <div class="expected">Card appears with the Spotify mini-player (152px tall). Audio plays via the Spotify Web Player on click. The <code>?si=</code> query param is stripped — only the bare track ID is stored as <code>embedId</code>.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t75">
+                <div class="task-content">
+                    <strong>Bad/unsupported URL is rejected with a friendly toast</strong>
+                    <div class="steps">In the Add-Song modal, paste e.g. <code>https://example.com/song</code> and try to save.</div>
+                    <div class="expected">Toast says "קישור לא נתמך — YouTube או Spotify בלבד" (or English equivalent). Modal stays open, no Firestore write happens.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t76">
+                <div class="task-content">
+                    <strong>Hostile data renders escaped, not executed <em class="priority-critical">Critical</em><span class="auto-tag">Auto ✓</span></strong>
+                    <div class="steps">Test harness injects a song with <code>title: '&lt;img onerror=...&gt;'</code> etc.</div>
+                    <div class="expected">Card shows the literal entities. <code>window.__pwned</code> stays undefined.<br><em>(Automated: <code>music.spec.js</code> renders synthetic hostile data.)</em></div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t77">
+                <div class="task-content">
+                    <strong>Iframes only mount when scrolled into view <span class="auto-tag">Auto ✓</span></strong>
+                    <div class="steps">DevTools → Network → reload → don't scroll. Count iframe document requests for music. Then scroll to the section.</div>
+                    <div class="expected">Initial count is 0 (placeholders shown). After scrolling, requests fire one at a time as cards approach the viewport. Confirms the IntersectionObserver lazy-mount works.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t78">
+                <div class="task-content">
+                    <strong>No CSP errors when embeds load</strong>
+                    <div class="steps">Open DevTools Console, scroll through the music section to mount each card.</div>
+                    <div class="expected">No <code>Refused to frame</code> or <code>Refused to load image</code> errors. CSP <code>frame-src</code> covers <code>www.youtube-nocookie.com</code>, <code>open.spotify.com</code>; <code>img-src</code> covers <code>i.ytimg.com</code> + <code>i.scdn.co</code>.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t79">
+                <div class="task-content">
+                    <strong>Admin can delete a song from the card</strong>
+                    <div class="steps">Logged in as admin, click 🗑 on a test song card. Confirm.</div>
+                    <div class="expected">Card disappears, Firestore <code>/songs</code> doc is deleted. Other songs unaffected.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t80">
+                <div class="task-content">
+                    <strong>Firestore rules reject unauthorised song writes</strong>
+                    <div class="steps">In DevTools console (logged out / anonymous): <code>fbDB.addSong({ title: 'X', artist: 'Y', type: 'loved', platform: 'youtube', embedId: 'abc' })</code>.</div>
+                    <div class="expected">Promise rejects with <code>permission-denied</code>. Confirms only admins can create songs.</div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="phase">
         <div class="phase-title">🧹 Phase 6: Cleanup After Testing</div>
         <div class="phase-desc">Remove test data so real visitors don't see it.</div>
         <ul class="task-list">
@@ -805,6 +1144,30 @@
                     <strong>Re-add original 4 candles</strong>
                     <div class="steps">Light 4 candles with the original names that were removed during migration: ילד, צפריר, חברים, גולני (or the ones that were there before).</div>
                     <div class="expected">All 4 appear in the candles row and in Firestore.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t67">
+                <div class="task-content">
+                    <strong>Delete test pins from <code>/places</code></strong>
+                    <div class="steps">Firestore console → places → delete any pins created during Phase 13 testing.</div>
+                    <div class="expected">Map shows only real pins after refresh.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t68">
+                <div class="task-content">
+                    <strong>Delete test letters from <code>/letters</code></strong>
+                    <div class="steps">Firestore console → letters → delete any letters created during Phase 14 testing.</div>
+                    <div class="expected">Sealed counter (admin) and unlocked list both reflect the cleanup.</div>
+                </div>
+            </li>
+            <li class="task-item">
+                <input type="checkbox" id="t81">
+                <div class="task-content">
+                    <strong>Delete test songs from <code>/songs</code></strong>
+                    <div class="steps">Firestore console → songs → delete any test entries created during Phase 15. Real curated songs stay.</div>
+                    <div class="expected">Music section only shows the actual songs you want visitors to hear.</div>
                 </div>
             </li>
         </ul>
